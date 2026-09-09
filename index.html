@@ -1,0 +1,2775 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S2P Process Twin — Motiveminds Consulting</title>
+    <link rel="icon" href="assets/motiveminds-favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ==========================================================================
+           SAP Fiori Horizon Design Tokens & Theme Definitions
+           Branded for Motiveminds Consulting Pvt Ltd
+           ========================================================================== */
+        :root {
+            /* Fiori Morning Horizon (Default Light Mode) */
+            --fiori-shell-bg: #1c2d42;
+            --fiori-shell-text: #ffffff;
+            --fiori-shell-border: rgba(255, 255, 255, 0.12);
+            --fiori-bg: #f5f6f9;
+            --fiori-bg-subtle: #ebedf2;
+            --fiori-card-bg: #ffffff;
+            --fiori-card-border: #d9e1e8;
+            --fiori-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --fiori-card-hover: #fbfcfd;
+            --fiori-card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --fiori-text-primary: #1d2d3e;
+            --fiori-text-secondary: #556b82;
+            --fiori-text-muted: #8292a4;
+            --fiori-blue: #0070f2;
+            --fiori-blue-hover: #0854a0;
+            --fiori-blue-light: #eef5fc;
+            --fiori-green: #107e3e;
+            --fiori-green-light: #edf7ed;
+            --fiori-orange: #e9730c;
+            --fiori-orange-light: #fff8e6;
+            --fiori-red: #bb0000;
+            --fiori-red-light: #fdf2f2;
+            --fiori-purple: #6366f1;
+            --fiori-purple-light: #f5f3ff;
+            --fiori-table-header: #f0f3f6;
+            --fiori-table-border: #e2e7ec;
+            --fiori-table-hover: #f5f8fc;
+            --fiori-input-bg: #ffffff;
+            --fiori-input-border: #89919a;
+            --fiori-chart-grid: rgba(0, 0, 0, 0.06);
+            --font-family: '72', '72full', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-pill: 20px;
+        }
+
+        [data-theme="dark"] {
+            /* Fiori Evening Horizon (Dark Mode) */
+            --fiori-shell-bg: #111a24;
+            --fiori-shell-text: #ffffff;
+            --fiori-shell-border: rgba(255, 255, 255, 0.08);
+            --fiori-bg: #0f141a;
+            --fiori-bg-subtle: #171f28;
+            --fiori-card-bg: #18212b;
+            --fiori-card-border: rgba(255, 255, 255, 0.08);
+            --fiori-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --fiori-card-hover: #1f2a36;
+            --fiori-card-hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            --fiori-text-primary: #e8ecf4;
+            --fiori-text-secondary: #94a3b8;
+            --fiori-text-muted: #64748b;
+            --fiori-blue: #6390ff;
+            --fiori-blue-hover: #4f7bf0;
+            --fiori-blue-light: rgba(99, 144, 255, 0.15);
+            --fiori-green: #36d399;
+            --fiori-green-light: rgba(54, 211, 153, 0.15);
+            --fiori-orange: #f5a623;
+            --fiori-orange-light: rgba(245, 166, 35, 0.15);
+            --fiori-red: #f56565;
+            --fiori-red-light: rgba(245, 101, 101, 0.15);
+            --fiori-purple: #a78bfa;
+            --fiori-purple-light: rgba(167, 139, 250, 0.15);
+            --fiori-table-header: #141b22;
+            --fiori-table-border: rgba(255, 255, 255, 0.06);
+            --fiori-table-hover: rgba(255, 255, 255, 0.04);
+            --fiori-input-bg: rgba(255, 255, 255, 0.05);
+            --fiori-input-border: rgba(255, 255, 255, 0.15);
+            --fiori-chart-grid: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--fiori-bg);
+            color: var(--fiori-text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        /* ==========================================================================
+           SAP Fiori ShellBar & Navigation Header
+           ========================================================================== */
+        /* ==========================================================================
+           SAP Fiori ShellBar — High-End Enterprise Navigation
+           ========================================================================== */
+        .fiori-shellbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 52px;
+            padding: 0 28px;
+            background: linear-gradient(180deg, #1e2e42 0%, #172434 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .fiori-shell-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .motiveminds-logo {
+            height: 24px;
+            width: auto;
+            max-width: 155px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+        }
+
+        .fiori-brand-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .fiori-product-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .fiori-tag {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(0, 112, 242, 0.22);
+            border: 1px solid rgba(99, 144, 255, 0.45);
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        /* Fiori Navigation Tabs — Authentic Underline Indicator */
+        .fiori-nav-tabs {
+            display: flex;
+            gap: 2px;
+            height: 52px;
+            align-items: stretch;
+            margin: 0 auto;
+        }
+
+        .fiori-tab-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-family);
+            border-bottom: 3px solid transparent;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .fiori-tab-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .fiori-tab-btn.active {
+            color: #ffffff;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.07);
+            border-bottom-color: #0070f2;
+        }
+
+        /* ShellBar Utility Actions */
+        .fiori-shell-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .fiori-icon-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+            cursor: pointer;
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .fiori-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ==========================================================================
+           Fiori Cards, Containers & Layouts
+           ========================================================================== */
+        .fiori-main {
+            flex: 1;
+            padding: 24px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .fiori-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--fiori-card-border);
+        }
+
+        .fiori-page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--fiori-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fiori-page-desc {
+            font-size: 13px;
+            color: var(--fiori-text-secondary);
+            margin-top: 4px;
+        }
+
+        .fiori-card {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--fiori-card-shadow);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            overflow: hidden;
+        }
+
+        .fiori-card:hover {
+            box-shadow: var(--fiori-card-hover-shadow);
+        }
+
+        .fiori-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--fiori-card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--fiori-card-bg);
+        }
+
+        .fiori-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--fiori-text-primary);
+        }
+
+        .fiori-card-subtitle {
+            font-size: 12px;
+            color: var(--fiori-text-secondary);
+            margin-top: 2px;
+        }
+
+        .fiori-card-body {
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ==========================================================================
+           Fiori KPI Grid (Numeric Content Tiles)
+           ========================================================================== */
+        .fiori-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .fiori-kpi-tile {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            padding: 18px 20px;
+            box-shadow: var(--fiori-card-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px solid var(--fiori-blue);
+        }
+
+        .fiori-kpi-tile.kpi-blue { border-top-color: var(--fiori-blue); }
+        .fiori-kpi-tile.kpi-green { border-top-color: var(--fiori-green); }
+        .fiori-kpi-tile.kpi-orange { border-top-color: var(--fiori-orange); }
+        .fiori-kpi-tile.kpi-red { border-top-color: var(--fiori-red); }
+        .fiori-kpi-tile.kpi-purple { border-top-color: var(--fiori-purple); }
+
+        .fiori-kpi-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--fiori-text-secondary);
+            font-weight: 600;
+        }
+
+        .fiori-kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--fiori-text-primary);
+            line-height: 1.1;
+            margin: 4px 0;
+            font-family: var(--font-family);
+        }
+
+        .fiori-kpi-trend {
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-positive { color: var(--fiori-green); }
+        .trend-negative { color: var(--fiori-red); }
+        .trend-neutral { color: var(--fiori-text-secondary); }
+
+        /* ==========================================================================
+           Analytical Charts Grid
+           ========================================================================== */
+        .fiori-charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .fiori-chart-card {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            box-shadow: var(--fiori-card-shadow);
+            min-height: 360px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fiori-chart-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        /* ==========================================================================
+           Action Cockpit & Fiori Recommendations
+           ========================================================================== */
+        .fiori-actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .fiori-action-card {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--fiori-card-shadow);
+            padding: 18px 22px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 5px solid transparent;
+        }
+
+        .fiori-action-card:hover {
+            box-shadow: var(--fiori-card-hover-shadow);
+            background: var(--fiori-card-hover);
+        }
+
+        .fiori-action-card.priority-CRITICAL { border-left-color: var(--fiori-red); }
+        .fiori-action-card.priority-HIGH { border-left-color: var(--fiori-orange); }
+        .fiori-action-card.priority-MEDIUM { border-left-color: var(--fiori-blue); }
+        .fiori-action-card.priority-LOW { border-left-color: var(--fiori-text-muted); }
+
+        .fiori-action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .fiori-action-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--fiori-text-primary);
+        }
+
+        .fiori-badge {
+            padding: 4px 10px;
+            border-radius: var(--border-radius-sm);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-CRITICAL { background: var(--fiori-red-light); color: var(--fiori-red); border: 1px solid rgba(187, 0, 0, 0.2); }
+        .badge-HIGH { background: var(--fiori-orange-light); color: var(--fiori-orange); border: 1px solid rgba(233, 115, 12, 0.2); }
+        .badge-MEDIUM { background: var(--fiori-blue-light); color: var(--fiori-blue); border: 1px solid rgba(0, 112, 242, 0.2); }
+        .badge-LOW { background: var(--fiori-bg-subtle); color: var(--fiori-text-secondary); border: 1px solid var(--fiori-card-border); }
+
+        .fiori-action-meta {
+            font-size: 12px;
+            color: var(--fiori-text-secondary);
+            display: flex;
+            gap: 16px;
+        }
+
+        .fiori-action-details {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--fiori-card-border);
+            animation: slideDown 0.2s ease-out;
+        }
+
+        .fiori-action-card.expanded .fiori-action-details {
+            display: block;
+        }
+
+        .fiori-factors-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 8px 0 16px 0;
+        }
+
+        .fiori-factor-tag {
+            background: var(--fiori-bg-subtle);
+            color: var(--fiori-text-primary);
+            border: 1px solid var(--fiori-card-border);
+            padding: 5px 12px;
+            border-radius: var(--border-radius-pill);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .factor-impact { font-weight: 700; }
+        .impact-negative { color: var(--fiori-red); }
+        .impact-positive { color: var(--fiori-green); }
+
+        .fiori-btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fiori-btn {
+            padding: 8px 18px;
+            border-radius: var(--border-radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: var(--font-family);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fiori-btn-primary {
+            background: var(--fiori-blue);
+            color: #ffffff;
+            border: 1px solid var(--fiori-blue);
+            box-shadow: 0 1px 3px rgba(0, 112, 242, 0.3);
+        }
+
+        .fiori-btn-primary:hover {
+            background: var(--fiori-blue-hover);
+            border-color: var(--fiori-blue-hover);
+        }
+
+        .fiori-btn-secondary {
+            background: var(--fiori-card-bg);
+            color: var(--fiori-blue);
+            border: 1px solid var(--fiori-blue);
+        }
+
+        .fiori-btn-secondary:hover {
+            background: var(--fiori-blue-light);
+        }
+
+        /* ==========================================================================
+           Simulation Engine (Horizon 4 What-If Simulator)
+           ========================================================================== */
+        .fiori-sim-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+        }
+
+        .fiori-scenarios-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .fiori-scenario-card {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .fiori-scenario-card:hover {
+            border-color: var(--fiori-blue);
+            background: var(--fiori-card-hover);
+        }
+
+        .fiori-scenario-card.active {
+            border-color: var(--fiori-blue);
+            background: var(--fiori-blue-light);
+            border-left: 4px solid var(--fiori-blue);
+        }
+
+        .scenario-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--fiori-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .scenario-desc {
+            font-size: 12px;
+            color: var(--fiori-text-secondary);
+            line-height: 1.4;
+        }
+
+        .fiori-sim-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .fiori-slider-group {
+            margin-bottom: 20px;
+        }
+
+        .fiori-slider-group:last-child { margin-bottom: 0; }
+
+        .fiori-slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--fiori-text-primary);
+        }
+
+        .fiori-slider-value {
+            color: var(--fiori-blue);
+            font-weight: 700;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--fiori-bg-subtle);
+            border-radius: 3px;
+            outline: none;
+            border: 1px solid var(--fiori-card-border);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--fiori-blue);
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .fiori-results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            position: relative;
+        }
+
+        .fiori-result-box {
+            background: var(--fiori-bg-subtle);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--fiori-text-secondary);
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .result-values {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .result-base {
+            font-size: 15px;
+            color: var(--fiori-text-muted);
+            text-decoration: line-through;
+        }
+
+        .result-projected {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--fiori-text-primary);
+        }
+
+        .result-delta {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .delta-positive { background: var(--fiori-green-light); color: var(--fiori-green); }
+        .delta-negative { background: var(--fiori-red-light); color: var(--fiori-red); }
+
+        /* Confidence Band (P5 - P95) */
+        .ci-band-container {
+            margin-top: 10px;
+            height: 18px;
+            position: relative;
+        }
+
+        .ci-band {
+            position: absolute;
+            top: 7px;
+            height: 5px;
+            background: rgba(0, 112, 242, 0.15);
+            width: 100%;
+            border-radius: 3px;
+        }
+
+        .ci-range {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: var(--fiori-blue);
+            border-radius: 3px;
+            opacity: 0.6;
+        }
+
+        .ci-marker {
+            position: absolute;
+            top: -3px;
+            width: 11px;
+            height: 11px;
+            background: var(--fiori-text-primary);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            border: 2px solid var(--fiori-card-bg);
+        }
+
+        .ci-label {
+            font-size: 10px;
+            color: var(--fiori-text-secondary);
+            display: block;
+            margin-top: 4px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--border-radius-md);
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .loading-overlay {
+            background: rgba(24, 33, 43, 0.85);
+        }
+
+        .fiori-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(0, 112, 242, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--fiori-blue);
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ==========================================================================
+           Data Explorer & Tables
+           ========================================================================== */
+        .fiori-explorer-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 20px;
+            height: calc(100vh - 180px);
+        }
+
+        .fiori-explorer-sidebar {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .fiori-table-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--fiori-text-muted);
+            margin: 12px 0 6px 6px;
+            font-weight: 700;
+        }
+
+        .fiori-table-nav-item {
+            padding: 9px 12px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--fiori-text-primary);
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fiori-table-nav-item:hover {
+            background: var(--fiori-bg-subtle);
+        }
+
+        .fiori-table-nav-item.active {
+            background: var(--fiori-blue-light);
+            color: var(--fiori-blue);
+            font-weight: 600;
+        }
+
+        .fiori-data-table-card {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--fiori-card-shadow);
+        }
+
+        .fiori-table-scroll {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .fiori-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .fiori-table th {
+            background: var(--fiori-table-header);
+            color: var(--fiori-text-secondary);
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid var(--fiori-table-border);
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        .fiori-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--fiori-table-border);
+            color: var(--fiori-text-primary);
+            white-space: nowrap;
+        }
+
+        .fiori-table tr:hover td {
+            background: var(--fiori-table-hover);
+        }
+
+        /* ==========================================================================
+           Fiori Modal Dialogs
+           ========================================================================== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .fiori-modal {
+            background: var(--fiori-card-bg);
+            border: 1px solid var(--fiori-card-border);
+            border-radius: var(--border-radius-lg);
+            width: 500px;
+            max-width: 92vw;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+            animation: scaleIn 0.2s ease-out;
+            overflow: hidden;
+        }
+
+        .fiori-modal-header {
+            padding: 18px 24px;
+            background: var(--fiori-shell-bg);
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fiori-modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fiori-modal-body {
+            padding: 24px;
+        }
+
+        .fiori-form-group {
+            margin-bottom: 16px;
+        }
+
+        .fiori-form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--fiori-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .fiori-form-control {
+            width: 100%;
+            background: var(--fiori-input-bg);
+            border: 1px solid var(--fiori-input-border);
+            color: var(--fiori-text-primary);
+            padding: 10px 12px;
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-family);
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .fiori-form-control:focus {
+            outline: none;
+            border-color: var(--fiori-blue);
+            box-shadow: 0 0 0 2px rgba(0, 112, 242, 0.25);
+        }
+
+        .fiori-modal-footer {
+            padding: 16px 24px;
+            background: var(--fiori-bg-subtle);
+            border-top: 1px solid var(--fiori-card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .connection-status {
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+        }
+        .connection-status.success { color: var(--fiori-green); display: block; }
+        .connection-status.error { color: var(--fiori-red); display: block; }
+        .connection-status.testing { color: var(--fiori-text-secondary); display: block; }
+
+        /* ==========================================================================
+           Footer & Branding Notice
+           ========================================================================== */
+        .fiori-footer {
+            border-top: 1px solid var(--fiori-card-border);
+            background: var(--fiori-card-bg);
+            padding: 14px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--fiori-text-secondary);
+            margin-top: auto;
+        }
+
+        .fiori-footer a {
+            color: var(--fiori-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .fiori-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 1024px) {
+            .fiori-charts-grid { grid-template-columns: 1fr; }
+            .fiori-sim-layout { grid-template-columns: 1fr; }
+            .fiori-explorer-layout { grid-template-columns: 1fr; height: auto; }
+            .fiori-shellbar { padding: 0 16px; }
+            .fiori-main { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SAP Fiori ShellBar with Motiveminds Consulting Branding -->
+    <header class="fiori-shellbar">
+        <div class="fiori-shell-brand">
+            <a href="https://www.motiveminds.com/" target="_blank" title="Motiveminds Consulting Pvt Ltd">
+                <img src="assets/motiveminds-logo.png" onerror="this.src='https://framerusercontent.com/images/YbHtzlHFuZ21FWGqibydltNVUPA.png'" alt="Motiveminds Consulting" class="motiveminds-logo">
+            </a>
+            <div class="fiori-brand-divider"></div>
+            <div class="fiori-product-title">
+                S2P Process Twin
+                <span class="fiori-tag">Live Cockpit</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs (Fiori Horizon Underline Style) -->
+        <nav class="fiori-nav-tabs">
+            <button class="fiori-tab-btn active" data-target="dashboard">📊 Dashboard</button>
+            <button class="fiori-tab-btn" data-target="explorer">🗄️ Data Explorer</button>
+            <button class="fiori-tab-btn" data-target="actions">⚡ Action Cockpit</button>
+            <button class="fiori-tab-btn" data-target="simulation">🔬 Simulation</button>
+            <button class="fiori-tab-btn" data-target="audit">📋 Audit Trail</button>
+        </nav>
+
+        <!-- Utility Actions: Theme Toggle & Settings -->
+        <div class="fiori-shell-actions">
+            <button class="fiori-icon-btn" id="themeToggle" title="Toggle Fiori Theme (Light/Dark)">
+                ☀️
+            </button>
+            <button class="fiori-icon-btn" id="btnSettings" title="SAP Databricks Connection Settings">
+                ⚙️
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="fiori-main">
+        
+        <!-- Tab 1: Dashboard -->
+        <section id="tab-dashboard" class="tab-content active">
+            <div class="fiori-page-header">
+                <div>
+                    <h1 class="fiori-page-title">📊 Executive Process Twin Dashboard</h1>
+                    <p class="fiori-page-desc">Real-time procurement KPIs harmonized across SAP Datasphere & SAP Databricks Unity Catalog</p>
+                </div>
+            </div>
+
+            <!-- Fiori KPI Grid -->
+            <div class="fiori-kpi-grid">
+                <div class="fiori-kpi-tile kpi-blue">
+                    <span class="fiori-kpi-label">On-Time Delivery (OTD)</span>
+                    <span class="fiori-kpi-value" id="kpiOtd">84.2%</span>
+                    <span class="fiori-kpi-trend trend-positive">▲ 1.4% vs last cycle</span>
+                </div>
+                <div class="fiori-kpi-tile kpi-orange">
+                    <span class="fiori-kpi-label">Avg Delay (Affected)</span>
+                    <span class="fiori-kpi-value" id="kpiAvgDelay">4.5 <span style="font-size:16px;font-weight:500;">days</span></span>
+                    <span class="fiori-kpi-trend trend-negative">▲ 0.8 days risk</span>
+                </div>
+                <div class="fiori-kpi-tile kpi-red">
+                    <span class="fiori-kpi-label">At-Risk Shipments</span>
+                    <span class="fiori-kpi-value" id="kpiAtRisk">12</span>
+                    <span class="fiori-kpi-trend trend-negative">▲ 3 new anomalies</span>
+                </div>
+                <div class="fiori-kpi-tile kpi-purple">
+                    <span class="fiori-kpi-label">Open Recommendations</span>
+                    <span class="fiori-kpi-value" id="kpiOpenRecs">6</span>
+                    <span class="fiori-kpi-trend trend-neutral">2 Critical • 2 High</span>
+                </div>
+                <div class="fiori-kpi-tile kpi-green">
+                    <span class="fiori-kpi-label">Total Value at Risk</span>
+                    <span class="fiori-kpi-value" id="kpiVar">$1.24M</span>
+                    <span class="fiori-kpi-trend trend-neutral">Across 150 Active POs</span>
+                </div>
+            </div>
+
+            <!-- Analytical Charts -->
+            <div class="fiori-charts-grid">
+                <div class="fiori-chart-card">
+                    <div class="fiori-card-title">📉 Average Delay by Strategic Vendor (Days)</div>
+                    <div class="fiori-card-subtitle">Aggregated from `FCT_SHIPMENT` & `DIM_VENDOR`</div>
+                    <div class="fiori-chart-container">
+                        <canvas id="chartVendorDelay"></canvas>
+                    </div>
+                </div>
+                <div class="fiori-chart-card">
+                    <div class="fiori-card-title">🚢 Global Shipment Status Distribution</div>
+                    <div class="fiori-card-subtitle">Active lifecycle states monitored in SAP Datasphere</div>
+                    <div class="fiori-chart-container">
+                        <canvas id="chartStatus"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Data Explorer -->
+        <section id="tab-explorer" class="tab-content">
+            <div class="fiori-page-header">
+                <div>
+                    <h1 class="fiori-page-title">🗄️ SAP Business Data Cloud Semantic Catalog</h1>
+                    <p class="fiori-page-desc">Browse local tables, feature stores, and analytical views in `s2p_twin.delayed_shipment`</p>
+                </div>
+            </div>
+
+            <div class="fiori-explorer-layout">
+                <div class="fiori-explorer-sidebar">
+                    <div class="fiori-table-category">Fact Tables</div>
+                    <div class="fiori-table-nav-item active" onclick="switchTable('fct_shipment', this)">🚢 fct_shipment</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('fct_purchase_order', this)">📦 fct_purchase_order</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('fct_shipment_event', this)">📍 fct_shipment_event</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('fct_vendor_performance', this)">📈 fct_vendor_performance</div>
+                    
+                    <div class="fiori-table-category">Dimension Tables</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('dim_vendor', this)">🏭 dim_vendor</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('dim_material', this)">🔩 dim_material</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('dim_carrier', this)">🚚 dim_carrier</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('dim_shipping_route', this)">🗺️ dim_shipping_route</div>
+                    
+                    <div class="fiori-table-category">Twin Engine Outputs</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('recommendations', this)">💡 recommendations</div>
+                    <div class="fiori-table-nav-item" onclick="switchTable('action_log', this)">📝 action_log</div>
+                </div>
+                
+                <div class="fiori-data-table-card">
+                    <div class="fiori-card-header">
+                        <span class="fiori-card-title" id="activeTableName">fct_shipment</span>
+                        <span class="fiori-tag" id="tableRecordCount">Loading...</span>
+                    </div>
+                    <div class="fiori-table-scroll" id="tableContainer">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Action Cockpit -->
+        <section id="tab-actions" class="tab-content">
+            <div class="fiori-page-header">
+                <div>
+                    <h1 class="fiori-page-title">⚡ Prescriptive Action Cockpit</h1>
+                    <p class="fiori-page-desc">Prioritized corrective actions generated by LightGBM model with SHAP explainability</p>
+                </div>
+            </div>
+
+            <!-- Fiori Filter & Search Bar -->
+            <div class="fiori-card" style="margin-bottom: 20px; padding: 18px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+                    <div>
+                        <label class="fiori-form-label">🔍 Purchase Order (PO)</label>
+                        <input type="text" id="filterPo" class="fiori-form-control" placeholder="Search PO (e.g. PO-4500045)" oninput="applyActionFilters()">
+                    </div>
+                    <div>
+                        <label class="fiori-form-label">🏭 Vendor</label>
+                        <select id="filterVendor" class="fiori-form-control" onchange="applyActionFilters()">
+                            <option value="">All Strategic Vendors</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="fiori-form-label">🔩 Material / SKU</label>
+                        <select id="filterMaterial" class="fiori-form-control" onchange="applyActionFilters()">
+                            <option value="">All Materials</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="fiori-form-label">🎯 Priority Level</label>
+                        <select id="filterPriority" class="fiori-form-control" onchange="applyActionFilters()">
+                            <option value="">All Priorities</option>
+                            <option value="CRITICAL">🔴 CRITICAL</option>
+                            <option value="HIGH">🟠 HIGH</option>
+                            <option value="MEDIUM">🟡 MEDIUM</option>
+                            <option value="LOW">🟢 LOW</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="fiori-btn fiori-btn-secondary" onclick="resetActionFilters()" style="height: 38px; width: 100%;">✕ Clear Filters</button>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--fiori-card-border); gap: 10px;">
+                    <span id="actionFilterCount" class="fiori-tag" style="background: var(--fiori-blue-light); color: var(--fiori-blue); font-weight: 600;">
+                        Loading recommendations from Databricks...
+                    </span>
+                    <span style="font-size: 12px; color: var(--fiori-text-secondary);">
+                        💡 Pro-Tip: Click <strong>"🔬 Simulate on this PO"</strong> on any action card to test order-level interventions
+                    </span>
+                </div>
+            </div>
+            
+            <div class="fiori-actions-list" id="actionsContainer">
+                <!-- Rendered via JS -->
+            </div>
+
+            <div id="actionsLoadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
+                <button class="fiori-btn fiori-btn-secondary" onclick="loadMoreActions()" style="padding: 10px 28px; font-weight: 600;">
+                    ⬇️ Load More Recommendations
+                </button>
+            </div>
+        </section>
+
+        <!-- Tab 4: Simulation -->
+        <section id="tab-simulation" class="tab-content">
+            <div class="fiori-page-header">
+                <div>
+                    <h1 class="fiori-page-title">🔬 Horizon 4 What-If Policy Simulator</h1>
+                    <p class="fiori-page-desc">Interactive Monte Carlo simulations connected to Databricks Model Serving (`s2p-twin-engine`)</p>
+                </div>
+            </div>
+
+            <!-- Target Scope / Order Selector -->
+            <div class="fiori-card" style="margin-bottom: 20px; padding: 18px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="flex: 1; min-width: 280px;">
+                            <label class="fiori-form-label">🎯 Simulation Scope / Target Purchase Order</label>
+                            <select id="simOrderSelect" class="fiori-form-control" onchange="onSimulationOrderSelected(this.value)" style="font-weight: 600;">
+                                <option value="GLOBAL">🌐 Global Supply Chain Network (Aggregate Policy)</option>
+                                <!-- Populated dynamically with delayed orders -->
+                            </select>
+                        </div>
+                        <div id="simOrderBadge" class="fiori-tag" style="height: 32px; display: flex; align-items: center; background: var(--fiori-blue-light); color: var(--fiori-blue); font-weight: 600;">
+                            Scope: Global Supply Network
+                        </div>
+                    </div>
+                    
+                    <!-- Selected Order Baseline KPI Strip -->
+                    <div id="simOrderDetailsStrip" style="display: none; padding: 12px 16px; background: var(--fiori-bg-subtle); border-radius: var(--border-radius-sm); border: 1px dashed var(--fiori-card-border);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; font-size: 12px;">
+                            <div><span style="color:var(--fiori-text-secondary);">PO Number:</span> <strong id="simPoNumber">—</strong></div>
+                            <div><span style="color:var(--fiori-text-secondary);">Supplier:</span> <strong id="simPoVendor">—</strong></div>
+                            <div><span style="color:var(--fiori-text-secondary);">Material SKU:</span> <strong id="simPoMaterial">—</strong></div>
+                            <div><span style="color:var(--fiori-text-secondary);">Baseline Delay:</span> <strong id="simPoDelay" style="color:var(--fiori-red);">—</strong></div>
+                            <div><span style="color:var(--fiori-text-secondary);">Order Value:</span> <strong id="simPoValue" style="color:var(--fiori-blue);">—</strong></div>
+                            <div><span style="color:var(--fiori-text-secondary);">Safety Stock Buffer:</span> <strong id="simPoBuffer">—</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fiori-sim-layout">
+                <div class="fiori-scenarios-panel" id="scenariosList">
+                    <!-- Scenario cards -->
+                </div>
+                
+                <div class="fiori-sim-workspace">
+                    <div class="fiori-card">
+                        <div class="fiori-card-header">
+                            <span class="fiori-card-title" id="simTitle">Simulation Parameters</span>
+                            <span class="fiori-tag">Interactive Controls</span>
+                        </div>
+                        <div class="fiori-card-body" id="simSliders">
+                            <!-- Sliders -->
+                        </div>
+                    </div>
+
+                    <div class="fiori-card" style="position: relative;">
+                        <div class="loading-overlay" id="simResultsLoading">
+                            <div class="fiori-spinner"></div>
+                        </div>
+                        <div class="fiori-card-header">
+                            <span class="fiori-card-title" id="simResultsHeaderTitle">Projected Outcome &amp; Confidence Intervals</span>
+                            <span class="fiori-tag" style="background:var(--fiori-green-light);color:var(--fiori-green);border-color:rgba(16,126,62,0.3);">Monte Carlo P5 - P95</span>
+                        </div>
+                        <div class="fiori-card-body">
+                            <div class="fiori-results-grid" id="simResults">
+                                <!-- Results -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 5: Audit Trail -->
+        <section id="tab-audit" class="tab-content">
+            <div class="fiori-page-header">
+                <div>
+                    <h1 class="fiori-page-title">📋 Closed-Loop Audit Trail &amp; Governance</h1>
+                    <p class="fiori-page-desc">Immutable audit records written back to Databricks Delta table `s2p_twin.delayed_shipment.action_log`</p>
+                </div>
+            </div>
+
+            <div class="fiori-card fiori-data-table-card">
+                <div class="fiori-card-header">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span class="fiori-card-title">Confirmed Interventions History</span>
+                        <span class="fiori-tag" id="auditRecordCount">Live Delta Lake</span>
+                    </div>
+                    <button class="fiori-btn fiori-btn-secondary" onclick="loadAuditTrail()">🔄 Refresh Log</button>
+                </div>
+                <div class="fiori-table-scroll">
+                    <table class="fiori-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Action ID</th>
+                                <th>Intervention Type</th>
+                                <th>Action Description</th>
+                                <th>Executed By</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Motiveminds Enterprise Footer -->
+    <footer class="fiori-footer">
+        <div>
+            <strong>S2P Process Twin</strong> • Designed &amp; Developed for SAP Business Data Cloud by 
+            <a href="https://www.motiveminds.com/" target="_blank">Motiveminds Consulting Pvt Ltd</a>
+        </div>
+        <div>
+            <span>Version 2.4-Fiori</span> • <span>SAP Horizon Design System</span> • <span id="lastSyncTime">Status: Active</span>
+        </div>
+    </footer>
+
+    <!-- Databricks Connection Settings Modal -->
+    <div class="modal-backdrop" id="settingsModal">
+        <div class="fiori-modal">
+            <div class="fiori-modal-header">
+                <div class="fiori-modal-title">
+                    <span>⚙️</span> SAP Databricks Connection Setup
+                </div>
+                <button class="fiori-icon-btn" onclick="closeSettings()">✕</button>
+            </div>
+            <div class="fiori-modal-body">
+                <div class="fiori-form-group">
+                    <label class="fiori-form-label">Databricks Workspace URL</label>
+                    <input type="text" class="fiori-form-control" id="dbWorkspaceUrl" placeholder="https://adb-xxxx.azuredatabricks.net">
+                </div>
+                <div class="fiori-form-group">
+                    <label class="fiori-form-label">Personal Access Token (PAT)</label>
+                    <input type="password" class="fiori-form-control" id="dbToken" placeholder="dapi...">
+                </div>
+                <div class="fiori-form-group">
+                    <label class="fiori-form-label">SQL Warehouse ID</label>
+                    <input type="text" class="fiori-form-control" id="dbWarehouseId" placeholder="e.g. 1a2b3c4d5e6f7g8h">
+                </div>
+                <div class="fiori-form-group">
+                    <label class="fiori-form-label">Model Serving Endpoint Name</label>
+                    <input type="text" class="fiori-form-control" id="dbEndpoint" value="s2p-twin-engine">
+                </div>
+            </div>
+            <div class="fiori-modal-footer">
+                <div id="connStatus" class="connection-status"></div>
+                <div class="fiori-btn-group">
+                    <button class="fiori-btn fiori-btn-secondary" onclick="useDemoMode()">Use Demo Mode</button>
+                    <button class="fiori-btn fiori-btn-secondary" onclick="testConnection()">Test Connection</button>
+                    <button class="fiori-btn fiori-btn-primary" onclick="saveConnection()">Save &amp; Connect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYNTHETIC DATA & APPLICATION LOGIC -->
+    <script>
+        // ============================================================
+        // Synthetic Baseline Dataset (Demo Mode Fallback)
+        // ============================================================
+        const DEMO_VENDORS = [
+            { vendor_id: 'V-1001', name: 'Apex Industrial Supplies', region: 'Europe', country: 'Germany', on_time_delivery_pct: 92, risk_score: 0.15, tier: 'Strategic' },
+            { vendor_id: 'V-1002', name: 'Meridian Components Ltd', region: 'Asia-Pacific', country: 'China', on_time_delivery_pct: 78, risk_score: 0.42, tier: 'Leverage' },
+            { vendor_id: 'V-1003', name: 'Bharat Forgings Pvt', region: 'Asia-Pacific', country: 'India', on_time_delivery_pct: 85, risk_score: 0.28, tier: 'Strategic' },
+            { vendor_id: 'V-1004', name: 'Svenska Kullagerfabriken', region: 'Europe', country: 'Sweden', on_time_delivery_pct: 96, risk_score: 0.08, tier: 'Strategic' },
+            { vendor_id: 'V-1005', name: 'Sakura Precision Parts', region: 'Asia-Pacific', country: 'Japan', on_time_delivery_pct: 88, risk_score: 0.22, tier: 'Preferred' },
+            { vendor_id: 'V-1006', name: 'Atlas Raw Materials SA', region: 'South America', country: 'Brazil', on_time_delivery_pct: 72, risk_score: 0.51, tier: 'Tactical' }
+        ];
+
+        const DEMO_MATERIALS = [
+            { material_id: 'M-2006', desc: 'Hydraulic Pump Assembly', criticality: 'HIGH', safety_stock_days: 14 },
+            { material_id: 'M-2001', desc: 'Steel Coil Grade A', criticality: 'MEDIUM', safety_stock_days: 14 },
+            { material_id: 'M-2007', desc: 'Electronic Control Unit', criticality: 'HIGH', safety_stock_days: 21 },
+            { material_id: 'M-2002', desc: 'Aluminum Extrusion Profile', criticality: 'MEDIUM', safety_stock_days: 10 }
+        ];
+
+        const DEMO_SHIPMENTS = [
+            { shipment_id: 'SHP-90045', po_number: 'PO-4500045', vendor_id: 'V-1002', material_id: 'M-2006', status: 'DELAYED', delay_days: 8, delay_reason: 'Port congestion at Shanghai', carrier: 'Maersk Line', current_location: 'Shanghai Port', total_value: 225000, currency: 'USD' },
+            { shipment_id: 'SHP-90078', po_number: 'PO-4500078', vendor_id: 'V-1006', material_id: 'M-2001', status: 'DELAYED', delay_days: 15, delay_reason: 'Tropical storm disruption at Santos Port', carrier: 'CMA CGM', current_location: 'Santos Port', total_value: 125000, currency: 'USD' },
+            { shipment_id: 'SHP-90091', po_number: 'PO-4500091', vendor_id: 'V-1006', material_id: 'M-2001', status: 'DELAYED', delay_days: 12, delay_reason: 'Vendor production delay - raw material shortage', carrier: 'MSC', current_location: 'Santos', total_value: 98000, currency: 'USD' },
+            { shipment_id: 'SHP-90034', po_number: 'PO-4500034', vendor_id: 'V-1003', material_id: 'M-2007', status: 'CUSTOMS_HOLD', delay_days: 5, delay_reason: 'Customs documentation error at Chennai port', carrier: 'DHL', current_location: 'Chennai Customs', total_value: 312000, currency: 'USD' },
+            { shipment_id: 'SHP-90056', po_number: 'PO-4500056', vendor_id: 'V-1002', material_id: 'M-2002', status: 'DELAYED', delay_days: 3, delay_reason: 'Suez Canal congestion', carrier: 'Hapag-Lloyd', current_location: 'Suez Canal Zone', total_value: 67500, currency: 'USD' },
+            { shipment_id: 'SHP-90012', po_number: 'PO-4500012', vendor_id: 'V-1005', material_id: 'M-2007', status: 'IN_TRANSIT', delay_days: 2, delay_reason: 'Transit hub delay at Singapore', carrier: 'Nippon Express', current_location: 'Singapore Hub', total_value: 178000, currency: 'USD' },
+            { shipment_id: 'SHP-90001', po_number: 'PO-4500001', vendor_id: 'V-1001', material_id: 'M-2006', status: 'DELIVERED', delay_days: 0, delay_reason: '', carrier: 'Maersk Line', current_location: 'Munich Plant', total_value: 55000, currency: 'USD' },
+            { shipment_id: 'SHP-90002', po_number: 'PO-4500002', vendor_id: 'V-1002', material_id: 'M-2001', status: 'DELIVERED', delay_days: 0, delay_reason: '', carrier: 'DHL', current_location: 'Chennai Plant', total_value: 50000, currency: 'EUR' },
+            { shipment_id: 'SHP-90003', po_number: 'PO-4500003', vendor_id: 'V-1004', material_id: 'M-2007', status: 'DELIVERED', delay_days: 0, delay_reason: '', carrier: 'DB Schenker', current_location: 'Detroit Hub', total_value: 75000, currency: 'USD' },
+            { shipment_id: 'SHP-90004', po_number: 'PO-4500004', vendor_id: 'V-1001', material_id: 'M-2002', status: 'IN_TRANSIT', delay_days: 0, delay_reason: '', carrier: 'Kuehne+Nagel', current_location: 'Hamburg Port', total_value: 88000, currency: 'EUR' },
+            { shipment_id: 'SHP-90005', po_number: 'PO-4500005', vendor_id: 'V-1003', material_id: 'M-2006', status: 'DELIVERED', delay_days: 0, delay_reason: '', carrier: 'FedEx', current_location: 'Mumbai Plant', total_value: 142000, currency: 'USD' },
+            { shipment_id: 'SHP-90006', po_number: 'PO-4500006', vendor_id: 'V-1005', material_id: 'M-2001', status: 'DELIVERED', delay_days: 0, delay_reason: '', carrier: 'COSCO', current_location: 'Shanghai Plant', total_value: 95000, currency: 'USD' }
+        ];
+
+        const DEMO_RECOMMENDATIONS = [
+            { id: 'REC-2026-00201', priority: 'CRITICAL', confidence: 0.94, shipment: DEMO_SHIPMENTS[0], summary: 'Hydraulic Pump Assembly from Meridian Components — Shanghai port congestion causing 8-day delay', factors: [{name:'Port congestion at Shanghai',impact:-0.38},{name:'Vendor OTD below 80%',impact:-0.25},{name:'Material criticality HIGH',impact:-0.18}], actions: ['Expedite Partial via Air Freight','Emergency Source Domestic','Escalate to VP Supply Chain','Accept Delay Risk'], status: 'PENDING' },
+            { id: 'REC-2026-00202', priority: 'CRITICAL', confidence: 0.91, shipment: DEMO_SHIPMENTS[1], summary: 'Steel Coil from Atlas Raw Materials — Tropical storm at Santos, $125K at risk', factors: [{name:'Tropical storm disruption',impact:-0.42},{name:'Route risk factor high',impact:-0.28},{name:'Long transit distance',impact:-0.15}], actions: ['Air Freight Expedite','Split to Nordic Precision','Cancel and Reassign','Accept Delay'], status: 'PENDING' },
+            { id: 'REC-2026-00203', priority: 'HIGH', confidence: 0.87, shipment: DEMO_SHIPMENTS[2], summary: 'Steel Coil from Atlas — Vendor production issues, 12-day delay', factors: [{name:'Vendor production delay',impact:-0.35},{name:'Vendor risk score 0.51',impact:-0.22},{name:'No alternate source active',impact:-0.12}], actions: ['Dual Source with Apex Industrial','Escalate to Vendor Management','Adjust Production Schedule','Accept Delay'], status: 'PENDING' },
+            { id: 'REC-2026-00204', priority: 'HIGH', confidence: 0.85, shipment: DEMO_SHIPMENTS[3], summary: 'ECU from Bharat Forgings — Chennai Customs hold, documentation error', factors: [{name:'Customs documentation error',impact:-0.40},{name:'Regulatory compliance gap',impact:-0.20},{name:'Port processing backlog',impact:-0.10}], actions: ['Engage Fast-Track Customs Broker','Escalate via Trade Compliance','Request Vendor Re-documentation','Accept Delay'], status: 'PENDING' },
+            { id: 'REC-2026-00205', priority: 'MEDIUM', confidence: 0.72, shipment: DEMO_SHIPMENTS[4], summary: 'Aluminum Extrusion from Meridian — Suez Canal congestion, 3-day delay', factors: [{name:'Suez Canal congestion',impact:-0.30},{name:'Seasonal traffic peak',impact:-0.15},{name:'Carrier schedule variance',impact:-0.08}], actions: ['Contact Carrier for ETA Update','Monitor GPS Tracking','Accept Delay'], status: 'PENDING' },
+            { id: 'REC-2026-00206', priority: 'LOW', confidence: 0.65, shipment: DEMO_SHIPMENTS[5], summary: 'ECU from Sakura Precision — Transit hub delay at Singapore, low impact', factors: [{name:'Transit hub congestion',impact:-0.18},{name:'Minor carrier schedule shift',impact:-0.08},{name:'Buffer stock adequate',impact:0.05}], actions: ['Standard Monitoring','Acknowledge & Close'], status: 'PENDING' }
+        ];
+
+        let DEMO_ACTION_LOG = [
+            { action_id: 'ACT-0001', recommendation_id: 'REC-2026-00101', action_type: 'EXPEDITE', action_label: 'Expedited via Air Freight (DHL Express)', executed_by: 'Anil Mutalik', executed_at: new Date(Date.now() - 86400000).toISOString(), status: 'EXECUTED' },
+            { action_id: 'ACT-0002', recommendation_id: 'REC-2026-00102', action_type: 'SPLIT_SOURCE', action_label: 'Split order 60/40 with Apex Industrial', executed_by: 'Hans Weber', executed_at: new Date(Date.now() - 172800000).toISOString(), status: 'EXECUTED' }
+        ];
+
+        const SCENARIOS = [
+            {
+                id: 'carrier_switch', name: 'Switch Carrier for Delayed Shipments',
+                description: 'What if we reroute delayed sea-freight shipments to air freight?',
+                parameters: [
+                    { id: 'pct_rerouted', label: '% Shipments Rerouted to Air', min: 0, max: 100, default: 50, unit: '%' },
+                    { id: 'cost_multiplier', label: 'Air Freight Cost Multiplier', min: 1.5, max: 5, default: 3, step: 0.1, unit: 'x' }
+                ],
+                baseMetrics: { otd_pct: 58.3, avg_delay_days: 7.5, total_cost: 1034700, at_risk_lines: 6 },
+                calculate(params) {
+                    const pct = params.pct_rerouted / 100;
+                    const costMult = params.cost_multiplier;
+                    return {
+                        otd_pct: Math.min(98, 58.3 + (pct * 33)),
+                        avg_delay_days: Math.max(0.5, 7.5 - (pct * 6.2)),
+                        total_cost: Math.round(1034700 + (1034700 * pct * (costMult - 1) * 0.15)),
+                        at_risk_lines: Math.max(0, Math.round(6 - (pct * 5)))
+                    };
+                }
+            },
+            {
+                id: 'dual_source', name: 'Dual-Source Critical Materials',
+                description: 'What if we split orders across primary and secondary vendors?',
+                parameters: [
+                    { id: 'split_pct', label: '% Volume to Secondary Vendor', min: 10, max: 50, default: 30, unit: '%' },
+                    { id: 'secondary_otd', label: 'Expected Secondary Vendor OTD %', min: 70, max: 99, default: 90, unit: '%' }
+                ],
+                baseMetrics: { otd_pct: 58.3, avg_delay_days: 7.5, total_cost: 1034700, supply_risk_score: 0.62 },
+                calculate(params) {
+                    const split = params.split_pct / 100;
+                    const secOtd = params.secondary_otd / 100;
+                    return {
+                        otd_pct: Math.min(96, 58.3 + (split * secOtd * 45)),
+                        avg_delay_days: Math.max(1, 7.5 - (split * secOtd * 7)),
+                        total_cost: Math.round(1034700 * (1 + split * 0.08)),
+                        supply_risk_score: Math.max(0.1, 0.62 - (split * 0.8))
+                    };
+                }
+            },
+            {
+                id: 'buffer_stock', name: 'Increase Safety Buffer Stock',
+                description: 'What if we increase safety stock levels for critical materials?',
+                parameters: [
+                    { id: 'buffer_days', label: 'Additional Buffer Days', min: 0, max: 30, default: 7, unit: 'days' },
+                    { id: 'holding_cost_pct', label: 'Annual Holding Cost %', min: 10, max: 35, default: 20, unit: '%' }
+                ],
+                baseMetrics: { production_stop_risk: 0.45, avg_buffer_days: 5.7, holding_cost_annual: 185000, at_risk_lines: 6 },
+                calculate(params) {
+                    const addDays = params.buffer_days;
+                    const holdPct = params.holding_cost_pct / 100;
+                    return {
+                        production_stop_risk: Math.max(0.02, 0.45 - (addDays * 0.035)),
+                        avg_buffer_days: 5.7 + addDays,
+                        holding_cost_annual: Math.round(185000 + (addDays / 365) * holdPct * 120000 * 3),
+                        at_risk_lines: Math.max(0, Math.round(6 - (addDays * 0.5)))
+                    };
+                }
+            }
+        ];
+
+        // ============================================================
+        // SAP Databricks API Client (BDCClient)
+        // Routes through local CORS proxy (localhost:3001) to bypass
+        // browser CORS restrictions when calling Databricks REST APIs.
+        // ============================================================
+        // Auto-detect proxy: Use same-origin relative URL when hosted on Vercel/Web, or localhost:3001 for local file://
+        const PROXY_BASE = (window.location.protocol.startsWith('http')) ? '' : 'http://localhost:3001';
+
+        class BDCClient {
+            constructor() { 
+                this.config = JSON.parse(localStorage.getItem('bdc_config') || 'null');
+                this.proxyAvailable = null; // Will be auto-detected
+            }
+            
+            get isConnected() { return !!this.config; }
+
+            // Auto-detect if the local CORS proxy is running
+            async _checkProxy() {
+                if (this.proxyAvailable !== null) return this.proxyAvailable;
+                try {
+                    const resp = await fetch(`${PROXY_BASE}/health`, { method: 'GET', signal: AbortSignal.timeout(2000) });
+                    const data = await resp.json();
+                    this.proxyAvailable = data.status === 'ok';
+                } catch {
+                    this.proxyAvailable = false;
+                }
+                return this.proxyAvailable;
+            }
+            
+            async executeSQL(statement) {
+                if (!this.isConnected) return [];
+                const useProxy = await this._checkProxy();
+
+                let data;
+                if (useProxy) {
+                    // Route through local proxy (bypasses CORS)
+                    const resp = await fetch(`${PROXY_BASE}/proxy/sql`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workspaceUrl: this.config.workspaceUrl,
+                            token: this.config.token,
+                            warehouseId: this.config.warehouseId,
+                            statement: statement
+                        })
+                    });
+                    data = await resp.json();
+                } else {
+                    // Direct call (works if CORS is allowed or deployed on same origin)
+                    const resp = await fetch(`${this.config.workspaceUrl}/api/2.0/sql/statements`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statement, warehouse_id: this.config.warehouseId, wait_timeout: '30s' })
+                    });
+                    data = await resp.json();
+                }
+
+                // If query is pending or running, poll up to 5 times (waiting 2s)
+                let attempts = 0;
+                while ((data.status?.state === 'PENDING' || data.status?.state === 'RUNNING') && attempts < 5 && data.statement_id) {
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 2000));
+                    try {
+                        if (useProxy) {
+                            const pollResp = await fetch(`${PROXY_BASE}/proxy/statement/${data.statement_id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    workspaceUrl: this.config.workspaceUrl,
+                                    token: this.config.token
+                                })
+                            });
+                            data = await pollResp.json();
+                        } else {
+                            const pollResp = await fetch(`${this.config.workspaceUrl}/api/2.0/sql/statements/${data.statement_id}`, {
+                                method: 'GET',
+                                headers: { 'Authorization': `Bearer ${this.config.token}` }
+                            });
+                            data = await pollResp.json();
+                        }
+                    } catch (pollErr) {
+                        console.warn('Statement poll attempt failed', pollErr);
+                        break;
+                    }
+                }
+
+                if (data.status?.state === 'SUCCEEDED') {
+                    return this._transformSQLResult(data);
+                }
+                if (data.error) throw new Error(data.error);
+                if (data.status?.error?.message) throw new Error(data.status.error.message);
+                throw new Error(data.message || 'SQL execution failed');
+            }
+            
+            async callTwinEngine(action, params) {
+                if (!this.isConnected) return null;
+                const useProxy = await this._checkProxy();
+
+                let data;
+                if (useProxy) {
+                    const resp = await fetch(`${PROXY_BASE}/proxy/serving`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workspaceUrl: this.config.workspaceUrl,
+                            token: this.config.token,
+                            endpointName: this.config.endpointName,
+                            payload: { dataframe_records: [{ action, params: JSON.stringify(params) }] }
+                        })
+                    });
+                    data = await resp.json();
+                } else {
+                    const resp = await fetch(`${this.config.workspaceUrl}/serving-endpoints/${this.config.endpointName}/invocations`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ dataframe_records: [{ action, params: JSON.stringify(params) }] })
+                    });
+                    data = await resp.json();
+                }
+
+                if (data.predictions && data.predictions.length > 0) {
+                    const p = data.predictions[0];
+                    const rawResult = (typeof p === 'object' && p !== null) ? (p.result !== undefined ? p.result : p) : p;
+                    return typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+                }
+                if (data.error) throw new Error(data.error);
+                throw new Error('Model inference failed');
+            }
+            
+            _transformSQLResult(data) {
+                if (!data.manifest || !data.result) return [];
+                const columns = data.manifest.schema?.columns || data.manifest.columns || [];
+                if (!columns.length || !data.result.data_array) return [];
+                const cols = columns.map(c => c.name);
+                return data.result.data_array.map(row => {
+                    const obj = {};
+                    cols.forEach((col, i) => obj[col] = row[i]);
+                    return obj;
+                });
+            }
+        }
+
+        const bdcClient = new BDCClient();
+
+        // Application State
+        let activeScenario = null;
+        let simParams = {};
+        let simDebounceTimer = null;
+        let chartInstances = {};
+        let allRecommendations = [];
+        let filteredRecommendations = [];
+        let actionDisplayLimit = 20;
+        let allDelayedOrders = [];
+        let selectedSimulationOrder = 'GLOBAL';
+
+        // Theme Toggle Handler
+        function initTheme() {
+            const savedTheme = localStorage.getItem('fiori_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('fiori_theme', next);
+                updateThemeButton(next);
+                reloadCharts();
+            });
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggle');
+            if (theme === 'dark') {
+                btn.innerHTML = '🌙';
+                btn.title = 'Switch to SAP Fiori Morning Horizon (Light)';
+            } else {
+                btn.innerHTML = '☀️';
+                btn.title = 'Switch to SAP Fiori Evening Horizon (Dark)';
+            }
+        }
+
+        function switchTab(targetTabName) {
+            document.querySelectorAll('.fiori-tab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.target === targetTabName);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.toggle('active', c.id === `tab-${targetTabName}`);
+            });
+            if (targetTabName === 'audit') loadAuditTrail();
+            if (targetTabName === 'dashboard') reloadCharts();
+        }
+
+        function setupTabs() {
+            document.querySelectorAll('.fiori-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const target = btn.dataset.target;
+                    switchTab(target);
+                });
+            });
+        }
+
+        function updateModeUI() {
+            const lastSync = document.getElementById('lastSyncTime');
+            if (lastSync) {
+                lastSync.textContent = bdcClient.isConnected 
+                    ? `Connected: ${bdcClient.config.workspaceUrl}` 
+                    : `Synthetic Data Mode`;
+            }
+        }
+
+        // Settings Modal
+        document.getElementById('btnSettings').addEventListener('click', openSettings);
+        function openSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'flex';
+            if (bdcClient.isConnected) {
+                document.getElementById('dbWorkspaceUrl').value = bdcClient.config.workspaceUrl || '';
+                document.getElementById('dbToken').value = bdcClient.config.token || '';
+                document.getElementById('dbWarehouseId').value = bdcClient.config.warehouseId || '';
+                document.getElementById('dbEndpoint').value = bdcClient.config.endpointName || 's2p-twin-engine';
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        async function testConnection() {
+            const statusEl = document.getElementById('connStatus');
+            statusEl.className = 'connection-status testing';
+            statusEl.innerText = '⏳ Testing connection...';
+            
+            const tempClient = {
+                workspaceUrl: document.getElementById('dbWorkspaceUrl').value.trim(),
+                token: document.getElementById('dbToken').value.trim(),
+                warehouseId: document.getElementById('dbWarehouseId').value.trim()
+            };
+            
+            try {
+                // Step 1: Check if CORS proxy is running
+                let proxyUp = false;
+                try {
+                    const healthResp = await fetch(`${PROXY_BASE}/health`, { method: 'GET', signal: AbortSignal.timeout(2000) });
+                    const healthData = await healthResp.json();
+                    proxyUp = healthData.status === 'ok';
+                } catch { proxyUp = false; }
+                
+                if (proxyUp) {
+                    // Route through proxy
+                    statusEl.innerText = '⏳ Proxy detected — testing Databricks...';
+                    const resp = await fetch(`${PROXY_BASE}/proxy/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workspaceUrl: tempClient.workspaceUrl,
+                            token: tempClient.token,
+                            warehouseId: tempClient.warehouseId
+                        })
+                    });
+                    const data = await resp.json();
+                    
+                    if (data.success) {
+                        statusEl.className = 'connection-status success';
+                        statusEl.innerText = '✅ Connection successful! (via proxy)';
+                    } else {
+                        throw new Error(data.message || 'Connection test failed');
+                    }
+                } else {
+                    // Try direct (will fail with CORS if opened from file:// or different origin)
+                    statusEl.innerText = '⏳ No proxy found — trying direct...';
+                    const resp = await fetch(`${tempClient.workspaceUrl}/api/2.0/sql/statements`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tempClient.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statement: 'SELECT 1', warehouse_id: tempClient.warehouseId, wait_timeout: '10s' })
+                    });
+                    
+                    if (resp.ok) {
+                        statusEl.className = 'connection-status success';
+                        statusEl.innerText = '✅ Connection successful! (direct)';
+                    } else {
+                        throw new Error('HTTP ' + resp.status);
+                    }
+                }
+            } catch (err) {
+                statusEl.className = 'connection-status error';
+                if (err.message === 'Failed to fetch' || err.message.includes('NetworkError') || err.message.includes('CORS')) {
+                    statusEl.innerHTML = `❌ CORS blocked. Start the proxy server first:<br>
+                        <code style="font-size:11px;background:rgba(187,0,0,0.1);padding:2px 6px;border-radius:3px;">
+                        pip install flask flask-cors requests && python app/proxy-server.py
+                        </code>`;
+                } else {
+                    statusEl.innerText = `❌ Connection failed: ${err.message}`;
+                }
+            }
+        }
+
+        function saveConnection() {
+            const config = {
+                workspaceUrl: document.getElementById('dbWorkspaceUrl').value.trim(),
+                token: document.getElementById('dbToken').value.trim(),
+                warehouseId: document.getElementById('dbWarehouseId').value.trim(),
+                endpointName: document.getElementById('dbEndpoint').value.trim()
+            };
+            localStorage.setItem('bdc_config', JSON.stringify(config));
+            location.reload();
+        }
+
+        function useDemoMode() {
+            localStorage.removeItem('bdc_config');
+            location.reload();
+        }
+
+        // ============================================================
+        // Dashboard & Charts (Live Databricks + Theme Aware)
+        // ============================================================
+        async function loadDashboard() {
+            let vendorData = { labels: ['Meridian (V-1002)', 'Atlas (V-1006)', 'Bharat (V-1003)', 'Sakura (V-1005)'], delays: [11, 27, 5, 2] };
+            let statusData = { labels: ['Delivered', 'In Transit', 'Delayed', 'Customs Hold'], counts: [6, 2, 3, 1] };
+            
+            if (bdcClient.isConnected) {
+                try {
+                    // 1. Live KPI metrics from fct_shipment and fct_purchase_order
+                    const kpiQuery = `
+                        SELECT 
+                            COUNT(s.shipment_id) AS total_shipments,
+                            ROUND(SUM(CASE WHEN s.delay_days <= 0 OR s.shipment_status = 'DELIVERED' THEN 1.0 ELSE 0.0 END) / NULLIF(COUNT(s.shipment_id), 0) * 100, 1) AS otd_pct,
+                            ROUND(AVG(CASE WHEN s.delay_days > 0 THEN s.delay_days ELSE NULL END), 1) AS avg_delay,
+                            SUM(CASE WHEN s.delay_days > 0 OR s.shipment_status IN ('DELAYED', 'CUSTOMS_HOLD') THEN 1 ELSE 0 END) AS at_risk_count,
+                            ROUND(SUM(CASE WHEN s.delay_days > 0 THEN coalesce(po.total_value, 50000) ELSE 0 END), 0) AS value_at_risk,
+                            COUNT(DISTINCT s.po_number) AS active_pos
+                        FROM s2p_twin.delayed_shipment.fct_shipment s
+                        LEFT JOIN s2p_twin.delayed_shipment.fct_purchase_order po ON s.po_number = po.po_number
+                    `;
+                    const kpiRes = await bdcClient.executeSQL(kpiQuery);
+                    if (kpiRes && kpiRes.length > 0) {
+                        const row = kpiRes[0];
+                        if (row.otd_pct !== undefined && row.otd_pct !== null) {
+                            document.getElementById('kpiOtd').textContent = `${parseFloat(row.otd_pct).toFixed(1)}%`;
+                        }
+                        if (row.avg_delay !== undefined && row.avg_delay !== null) {
+                            document.getElementById('kpiAvgDelay').innerHTML = `${parseFloat(row.avg_delay).toFixed(1)} <span style="font-size:16px;font-weight:500;">days</span>`;
+                        }
+                        if (row.at_risk_count !== undefined && row.at_risk_count !== null) {
+                            document.getElementById('kpiAtRisk').textContent = `${row.at_risk_count}`;
+                        }
+                        if (row.value_at_risk !== undefined && row.value_at_risk !== null) {
+                            const val = parseFloat(row.value_at_risk);
+                            document.getElementById('kpiVar').textContent = val >= 1000000 
+                                ? `$${(val / 1000000).toFixed(2)}M` 
+                                : `$${(val / 1000).toFixed(0)}K`;
+                        }
+                    }
+
+                    // 2. Open Recommendations count
+                    try {
+                        const recQuery = `SELECT COUNT(*) AS open_recs FROM s2p_twin.delayed_shipment.recommendations WHERE status = 'PENDING'`;
+                        const recRes = await bdcClient.executeSQL(recQuery);
+                        if (recRes && recRes.length > 0 && recRes[0].open_recs !== undefined) {
+                            document.getElementById('kpiOpenRecs').textContent = `${recRes[0].open_recs}`;
+                        }
+                    } catch(re) { /* Fallback */ }
+
+                    // 3. Live Strategic Vendor Delays Chart
+                    try {
+                        const vendorQuery = `
+                            SELECT 
+                                coalesce(v.vendor_name, po.vendor_id, 'Other') AS vendor_label,
+                                ROUND(AVG(s.delay_days), 1) AS avg_delay
+                            FROM s2p_twin.delayed_shipment.fct_shipment s
+                            LEFT JOIN s2p_twin.delayed_shipment.fct_purchase_order po ON s.po_number = po.po_number
+                            LEFT JOIN s2p_twin.delayed_shipment.dim_vendor v ON po.vendor_id = v.vendor_id
+                            WHERE s.delay_days > 0
+                            GROUP BY 1
+                            ORDER BY avg_delay DESC
+                            LIMIT 5
+                        `;
+                        const vendorRes = await bdcClient.executeSQL(vendorQuery);
+                        if (vendorRes && vendorRes.length > 0) {
+                            vendorData = {
+                                labels: vendorRes.map(r => r.vendor_label || 'Vendor'),
+                                delays: vendorRes.map(r => parseFloat(r.avg_delay) || 0)
+                            };
+                        }
+                    } catch(ve) { console.warn("Vendor chart live query fallback", ve); }
+
+                    // 4. Live Global Shipment Status Doughnut Chart
+                    try {
+                        const statusQuery = `
+                            SELECT 
+                                coalesce(shipment_status, 'UNKNOWN') AS status_name,
+                                COUNT(*) AS cnt
+                            FROM s2p_twin.delayed_shipment.fct_shipment
+                            GROUP BY 1
+                            ORDER BY cnt DESC
+                        `;
+                        const statusRes = await bdcClient.executeSQL(statusQuery);
+                        if (statusRes && statusRes.length > 0) {
+                            statusData = {
+                                labels: statusRes.map(r => r.status_name),
+                                counts: statusRes.map(r => parseInt(r.cnt) || 0)
+                            };
+                        }
+                    } catch(se) { console.warn("Status chart live query fallback", se); }
+
+                } catch(e) { console.warn("Live KPI fetch fallback", e); }
+            }
+            
+            renderCharts(vendorData, statusData);
+        }
+
+        function reloadCharts() {
+            loadDashboard();
+        }
+
+        function renderCharts(vendorData, statusData) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#556b82';
+
+            // 1. Vendor Delays Chart
+            const ctxVendor = document.getElementById('chartVendorDelay').getContext('2d');
+            if (chartInstances.vendor) chartInstances.vendor.destroy();
+            chartInstances.vendor = new Chart(ctxVendor, {
+                type: 'bar',
+                data: {
+                    labels: vendorData.labels,
+                    datasets: [{ 
+                        label: 'Average Delay (Days)', 
+                        data: vendorData.delays, 
+                        backgroundColor: ['#e9730c', '#bb0000', '#0070f2', '#107e3e', '#8e44ad'],
+                        borderRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false } 
+                    }, 
+                    scales: { 
+                        y: { 
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, font: { family: 'Inter', size: 11 } }
+                        }, 
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { family: 'Inter', size: 11 } }
+                        } 
+                    } 
+                }
+            });
+
+            // 2. Status Doughnut Chart
+            const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+            if (chartInstances.status) chartInstances.status.destroy();
+            chartInstances.status = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.labels,
+                    datasets: [{ 
+                        data: statusData.counts, 
+                        backgroundColor: ['#107e3e', '#0070f2', '#bb0000', '#e9730c', '#8e44ad'], 
+                        borderWidth: 2,
+                        borderColor: isDark ? '#18212b' : '#ffffff'
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '68%', 
+                    plugins: { 
+                        legend: { 
+                            position: 'right', 
+                            labels: { color: textColor, font: { family: 'Inter', size: 12 }, padding: 14 } 
+                        } 
+                    } 
+                }
+            });
+        }
+
+        // ============================================================
+        // Data Explorer (100% Live Databricks Delta Tables)
+        // ============================================================
+        function switchTable(tableName, el) {
+            document.querySelectorAll('.fiori-table-nav-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.getElementById('activeTableName').textContent = tableName;
+            loadDataExplorer(tableName);
+        }
+
+        async function loadDataExplorer(tableName) {
+            let data = [];
+            const countEl = document.getElementById('tableRecordCount');
+            countEl.textContent = '⏳ Querying Databricks...';
+            
+            const actualTable = tableName === 'fct_po' ? 'fct_purchase_order' : tableName;
+
+            if (bdcClient.isConnected) {
+                try {
+                    data = await bdcClient.executeSQL(`SELECT * FROM s2p_twin.delayed_shipment.${actualTable} LIMIT 100`);
+                } catch(e) {
+                    console.warn(`Table ${actualTable} SQL fetch error, falling back to demo data`, e);
+                }
+            }
+            
+            const isLive = data && data.length > 0;
+            if (!isLive) {
+                const demoMap = {
+                    'fct_shipment': DEMO_SHIPMENTS,
+                    'fct_purchase_order': DEMO_SHIPMENTS.map(s => ({ po_number: s.po_number, vendor_id: s.vendor_id, total_value: s.total_value, currency: s.currency, status: s.status })),
+                    'dim_vendor': DEMO_VENDORS,
+                    'dim_material': DEMO_MATERIALS,
+                    'recommendations': DEMO_RECOMMENDATIONS,
+                    'action_log': DEMO_ACTION_LOG
+                };
+                data = demoMap[actualTable] || demoMap[tableName] || [];
+            }
+            
+            countEl.textContent = isLive 
+                ? `🟢 ${data.length} records (Live Databricks)` 
+                : `🟡 ${data.length} records (Offline Demo)`;
+            countEl.style.background = isLive ? 'rgba(16, 126, 62, 0.15)' : 'rgba(233, 115, 12, 0.15)';
+            countEl.style.color = isLive ? '#107e3e' : '#e9730c';
+            
+            renderTable(data, document.getElementById('tableContainer'));
+        }
+
+        function renderTable(data, container) {
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="padding: 24px; color: var(--fiori-text-secondary); text-align: center;">No records found in this table.</div>';
+                return;
+            }
+            
+            let html = '<table class="fiori-table"><thead><tr>';
+            const keys = Object.keys(data[0]);
+            keys.forEach(k => html += `<th>${k}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            data.forEach(row => {
+                html += '<tr>';
+                keys.forEach(k => {
+                    let val = row[k];
+                    if (typeof val === 'object') val = JSON.stringify(val);
+                    html += `<td>${val !== null && val !== undefined ? val : '—'}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // Actions Cockpit (Live Databricks Recommendations with Filters)
+        // ============================================================
+        async function loadActions() {
+            const countTag = document.getElementById('actionFilterCount');
+            if (countTag) countTag.textContent = '⏳ Fetching live recommendations from Databricks...';
+            
+            allRecommendations = [];
+            
+            if (bdcClient.isConnected) {
+                try {
+                    // Fetch up to 250 records to comfortably cover all pending recommendations
+                    const query = `
+                        SELECT 
+                            recommendation_id, shipment_id, po_number, vendor_name, 
+                            material_desc, total_value, priority, status, 
+                            confidence_score, predicted_delay_days, summary, 
+                            rationale, recommended_actions
+                        FROM s2p_twin.delayed_shipment.recommendations 
+                        WHERE status = 'PENDING' OR status IS NULL
+                        ORDER BY CASE WHEN priority = 'CRITICAL' THEN 1 WHEN priority = 'HIGH' THEN 2 WHEN priority = 'MEDIUM' THEN 3 ELSE 4 END
+                        LIMIT 250
+                    `;
+                    const liveRecs = await bdcClient.executeSQL(query);
+                    if (liveRecs && liveRecs.length > 0) {
+                        allRecommendations = liveRecs.map(r => {
+                            let parsedActions = [];
+                            try {
+                                const parsed = typeof r.recommended_actions === 'string' ? JSON.parse(r.recommended_actions) : r.recommended_actions;
+                                parsedActions = Array.isArray(parsed) ? parsed.map(a => typeof a === 'string' ? a : (a.label || a.action_id)) : [];
+                            } catch { parsedActions = []; }
+                            
+                            if (!parsedActions.length) {
+                                if (r.priority === 'CRITICAL') parsedActions = ['Expedite Partial via Air Freight', 'Emergency Source Domestic', 'Escalate to VP'];
+                                else if (r.priority === 'HIGH') parsedActions = ['Dual Source 40%', 'Fast-Track Customs', 'Reschedule Line'];
+                                else parsedActions = ['Carrier GPS Tracking', 'Safety Stock Check'];
+                            }
+
+                            let factors = [];
+                            if (r.rationale) {
+                                const factorText = r.rationale.replace('Top contributing risk drivers: ', '').trim();
+                                factors = factorText.split(',').map(f => ({
+                                    name: f.trim(),
+                                    impact: -0.28
+                                }));
+                            }
+                            if (!factors.length) {
+                                factors = [
+                                    { name: `Predicted delay: ${r.predicted_delay_days || 5} days`, impact: -0.35 },
+                                    { name: 'Supplier lead-time variance', impact: -0.20 }
+                                ];
+                            }
+
+                            return {
+                                id: r.recommendation_id,
+                                priority: r.priority || 'HIGH',
+                                confidence: parseFloat(r.confidence_score) || 0.88,
+                                summary: r.summary || `${r.material_desc || 'Material'} from ${r.vendor_name || 'Vendor'} — ${r.predicted_delay_days || 'N/A'} days delay`,
+                                shipment: {
+                                    shipment_id: r.shipment_id || 'SHP-LIVE',
+                                    vendor_id: r.vendor_name || 'Strategic Supplier',
+                                    total_value: parseFloat(r.total_value) || 95000,
+                                    po_number: r.po_number || ''
+                                },
+                                material_desc: r.material_desc || 'Industrial Material',
+                                factors: factors,
+                                actions: parsedActions,
+                                status: r.status || 'PENDING'
+                            };
+                        });
+                    }
+                } catch(e) {
+                    console.warn("Live recommendations query fallback to demo", e);
+                }
+            }
+
+            if (!allRecommendations || allRecommendations.length === 0) {
+                allRecommendations = DEMO_RECOMMENDATIONS.map(r => ({
+                    ...r,
+                    material_desc: r.shipment?.material_id || 'Material'
+                }));
+            }
+
+            // Populate Vendor and Material Filter dropdowns dynamically
+            populateActionFilterDropdowns();
+
+            // Apply filters & render initial batch
+            actionDisplayLimit = 20;
+            applyActionFilters();
+        }
+
+        function populateActionFilterDropdowns() {
+            const vendorSelect = document.getElementById('filterVendor');
+            const materialSelect = document.getElementById('filterMaterial');
+            if (!vendorSelect || !materialSelect) return;
+
+            const selectedVendor = vendorSelect.value;
+            const selectedMaterial = materialSelect.value;
+
+            // Extract unique vendors
+            const vendors = Array.from(new Set(allRecommendations.map(r => r.shipment.vendor_id).filter(Boolean))).sort();
+            vendorSelect.innerHTML = '<option value="">All Strategic Vendors (' + vendors.length + ')</option>';
+            vendors.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                vendorSelect.appendChild(opt);
+            });
+            vendorSelect.value = selectedVendor;
+
+            // Extract unique materials
+            const materials = Array.from(new Set(allRecommendations.map(r => r.material_desc).filter(Boolean))).sort();
+            materialSelect.innerHTML = '<option value="">All Materials / SKUs (' + materials.length + ')</option>';
+            materials.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                materialSelect.appendChild(opt);
+            });
+            materialSelect.value = selectedMaterial;
+        }
+
+        function applyActionFilters() {
+            const poQuery = (document.getElementById('filterPo')?.value || '').trim().toLowerCase();
+            const vendorFilter = document.getElementById('filterVendor')?.value || '';
+            const materialFilter = document.getElementById('filterMaterial')?.value || '';
+            const priorityFilter = document.getElementById('filterPriority')?.value || '';
+
+            filteredRecommendations = allRecommendations.filter(r => {
+                // PO Search filter
+                if (poQuery) {
+                    const poMatch = (r.shipment?.po_number || '').toLowerCase().includes(poQuery);
+                    const shpMatch = (r.shipment?.shipment_id || '').toLowerCase().includes(poQuery);
+                    const idMatch = (r.id || '').toLowerCase().includes(poQuery);
+                    if (!poMatch && !shpMatch && !idMatch) return false;
+                }
+                // Vendor filter
+                if (vendorFilter && r.shipment?.vendor_id !== vendorFilter) {
+                    return false;
+                }
+                // Material filter
+                if (materialFilter && r.material_desc !== materialFilter) {
+                    return false;
+                }
+                // Priority filter
+                if (priorityFilter && r.priority !== priorityFilter) {
+                    return false;
+                }
+                return true;
+            });
+
+            const countTag = document.getElementById('actionFilterCount');
+            const loadMoreBtn = document.getElementById('actionsLoadMoreContainer');
+            
+            const total = filteredRecommendations.length;
+            const visible = Math.min(actionDisplayLimit, total);
+            
+            if (countTag) {
+                countTag.textContent = `Showing ${visible} of ${total} recommendations (Total in Databricks: ${allRecommendations.length})`;
+                countTag.style.background = total > 0 ? 'var(--fiori-blue-light)' : 'rgba(233, 115, 12, 0.15)';
+                countTag.style.color = total > 0 ? 'var(--fiori-blue)' : 'var(--fiori-orange)';
+            }
+
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = visible < total ? 'block' : 'none';
+            }
+
+            renderActionCards(filteredRecommendations.slice(0, visible));
+        }
+
+        function resetActionFilters() {
+            if (document.getElementById('filterPo')) document.getElementById('filterPo').value = '';
+            if (document.getElementById('filterVendor')) document.getElementById('filterVendor').value = '';
+            if (document.getElementById('filterMaterial')) document.getElementById('filterMaterial').value = '';
+            if (document.getElementById('filterPriority')) document.getElementById('filterPriority').value = '';
+            actionDisplayLimit = 20;
+            applyActionFilters();
+        }
+
+        function loadMoreActions() {
+            actionDisplayLimit += 20;
+            applyActionFilters();
+        }
+
+        function renderActionCards(recs) {
+            const container = document.getElementById('actionsContainer');
+            if (!container) return;
+
+            if (!recs || recs.length === 0) {
+                container.innerHTML = `
+                    <div class="fiori-card" style="padding: 36px; text-align: center; color: var(--fiori-text-secondary);">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
+                        <div style="font-weight: 600; font-size: 15px; color: var(--fiori-text-primary);">No matching recommendations found</div>
+                        <p style="font-size: 13px; margin-top: 4px;">Try clearing your search filters to display all pending recommendations.</p>
+                        <button class="fiori-btn fiori-btn-secondary" onclick="resetActionFilters()" style="margin-top: 14px;">Reset All Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            recs.forEach(rec => {
+                const exposure = rec.shipment?.total_value ? (rec.shipment.total_value >= 1000 ? `$${(rec.shipment.total_value/1000).toFixed(0)}K` : `$${rec.shipment.total_value}`) : '$50K';
+                const poIdentifier = rec.shipment?.po_number || rec.shipment?.shipment_id || 'PO-4500001';
+                html += `
+                <div class="fiori-action-card priority-${rec.priority}" onclick="this.classList.toggle('expanded')">
+                    <div class="fiori-action-header">
+                        <div class="fiori-action-title">${rec.summary}</div>
+                        <span class="fiori-badge badge-${rec.priority}">${rec.priority}</span>
+                    </div>
+                    <div class="fiori-action-meta">
+                        <span>📦 PO: <strong>${rec.shipment.po_number || 'N/A'}</strong> (${rec.shipment.shipment_id})</span>
+                        <span>🏭 Vendor: <strong>${rec.shipment.vendor_id}</strong></span>
+                        <span>🎯 AI Confidence: <strong>${(rec.confidence * 100).toFixed(0)}%</strong></span>
+                        <span>💰 Exposure: <strong>${exposure}</strong></span>
+                    </div>
+                    <div class="fiori-action-details" onclick="event.stopPropagation()">
+                        <div style="font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--fiori-text-secondary); margin-bottom: 6px;">
+                            SHAP Root-Cause Explainability Factors
+                        </div>
+                        <div class="fiori-factors-list">
+                            ${rec.factors.map(f => `
+                                <span class="fiori-factor-tag">
+                                    ${f.name}
+                                    <span class="factor-impact ${f.impact < 0 ? 'impact-negative' : 'impact-positive'}">${f.impact}</span>
+                                </span>
+                            `).join('')}
+                        </div>
+                        <div style="font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--fiori-text-secondary); margin-bottom: 8px;">
+                            Prescribed Interventions &amp; Simulation
+                        </div>
+                        <div class="fiori-btn-group">
+                            ${rec.actions.map((act, i) => `
+                                <button class="fiori-btn ${i === 0 ? 'fiori-btn-primary' : 'fiori-btn-secondary'}" onclick="confirmAction('${rec.id}', '${act}', '${rec.shipment.shipment_id}', '${rec.shipment.po_number || ''}', '${rec.priority}')">
+                                    ${i === 0 ? '⚡ ' : ''}${act}
+                                </button>
+                            `).join('')}
+                            <button class="fiori-btn fiori-btn-secondary" onclick="simulateOrder('${poIdentifier}')" style="background: rgba(0, 112, 242, 0.08); color: var(--fiori-blue); border-color: var(--fiori-blue); font-weight: 600;">
+                                🔬 Simulate What-If on this PO
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function simulateOrder(poIdentifier) {
+            switchTab('simulation');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            const selectEl = document.getElementById('simOrderSelect');
+            if (selectEl) {
+                let matchedValue = null;
+                for (let opt of selectEl.options) {
+                    if (opt.value === poIdentifier || opt.value.includes(poIdentifier) || (opt.text && opt.text.includes(poIdentifier))) {
+                        matchedValue = opt.value;
+                        break;
+                    }
+                }
+                if (matchedValue) {
+                    selectEl.value = matchedValue;
+                    onSimulationOrderSelected(matchedValue);
+                } else {
+                    onSimulationOrderSelected(poIdentifier);
+                }
+            }
+        }
+
+        async function confirmAction(recId, actionType, shipmentId, poNumber, priority) {
+            const logEntry = {
+                action_id: 'ACT-' + Math.floor(Math.random()*10000),
+                recommendation_id: recId,
+                shipment_id: shipmentId || '',
+                po_number: poNumber || '',
+                action_type: actionType,
+                action_label: `${actionType} confirmed for ${recId}`,
+                executed_by: 'Anil Mutalik (Motiveminds)',
+                executed_at: new Date().toISOString(),
+                priority: priority || 'HIGH',
+                status: 'EXECUTED'
+            };
+            
+            if (bdcClient.isConnected) {
+                try {
+                    await bdcClient.executeSQL(`
+                        INSERT INTO s2p_twin.delayed_shipment.action_log 
+                        (action_id, recommendation_id, shipment_id, po_number, action_type, action_label, executed_by, executed_at, priority, status) 
+                        VALUES ('${logEntry.action_id}', '${logEntry.recommendation_id}', '${logEntry.shipment_id}', '${logEntry.po_number}', '${logEntry.action_type}', '${logEntry.action_label}', '${logEntry.executed_by}', current_timestamp(), '${logEntry.priority}', 'EXECUTED')
+                    `);
+                    try {
+                        await bdcClient.executeSQL(`UPDATE s2p_twin.delayed_shipment.recommendations SET status = 'EXECUTED' WHERE recommendation_id = '${recId}'`);
+                    } catch(ue) { /* Non-critical update */ }
+                } catch(e) { console.error('Failed to log action to Databricks', e); }
+            } else {
+                DEMO_ACTION_LOG.unshift(logEntry);
+            }
+            
+            alert(`✅ Action "${actionType}" committed successfully to closed-loop audit log!`);
+            // Mark recommendation as executed locally
+            const targetRec = allRecommendations.find(r => r.id === recId);
+            if (targetRec) targetRec.status = 'EXECUTED';
+            allRecommendations = allRecommendations.filter(r => r.id !== recId);
+            applyActionFilters();
+            loadAuditTrail();
+        }
+
+        // ============================================================
+        // Simulation Engine (Order-Level & Global What-If Simulator)
+        // ============================================================
+        async function setupSimulation() {
+            const list = document.getElementById('scenariosList');
+            let html = '';
+            
+            SCENARIOS.forEach((s, idx) => {
+                html += `
+                <div class="fiori-scenario-card ${idx===0 ? 'active':''}" data-id="${s.id}" onclick="selectScenario('${s.id}')">
+                    <div class="scenario-title">${s.name}</div>
+                    <div class="scenario-desc">${s.description}</div>
+                </div>`;
+            });
+            list.innerHTML = html;
+            
+            // Fetch delayed orders for PO-level simulation dropdown
+            await fetchDelayedOrdersForSimulation();
+            
+            selectScenario(SCENARIOS[0].id);
+        }
+
+        async function fetchDelayedOrdersForSimulation() {
+            allDelayedOrders = [];
+            if (bdcClient.isConnected) {
+                try {
+                    const query = `
+                        SELECT 
+                            s.shipment_id, s.po_number, s.carrier_id, s.delay_days, s.shipment_status,
+                            coalesce(v.vendor_name, po.vendor_id, 'Strategic Vendor') AS vendor_name,
+                            coalesce(m.material_desc, po.material_id, 'Critical SKU') AS material_desc,
+                            coalesce(po.total_value, 50000) AS total_value,
+                            coalesce(m.safety_stock_days, 14) AS safety_stock_days
+                        FROM s2p_twin.delayed_shipment.fct_shipment s
+                        LEFT JOIN s2p_twin.delayed_shipment.fct_purchase_order po ON s.po_number = po.po_number
+                        LEFT JOIN s2p_twin.delayed_shipment.dim_vendor v ON po.vendor_id = v.vendor_id
+                        LEFT JOIN s2p_twin.delayed_shipment.dim_material m ON po.material_id = m.material_id
+                        WHERE s.delay_days > 0 OR s.shipment_status IN ('DELAYED', 'CUSTOMS_HOLD')
+                        ORDER BY s.delay_days DESC
+                        LIMIT 50
+                    `;
+                    const orders = await bdcClient.executeSQL(query);
+                    if (orders && orders.length > 0) {
+                        allDelayedOrders = orders;
+                    }
+                } catch(e) {
+                    console.warn("Could not fetch delayed orders for simulation, using demo", e);
+                }
+            }
+
+            if (!allDelayedOrders || allDelayedOrders.length === 0) {
+                allDelayedOrders = DEMO_SHIPMENTS.filter(s => s.delay_days > 0 || s.status === 'DELAYED').map(s => ({
+                    shipment_id: s.shipment_id,
+                    po_number: s.po_number,
+                    carrier_id: s.carrier,
+                    delay_days: s.delay_days,
+                    shipment_status: s.status,
+                    vendor_name: DEMO_VENDORS.find(v => v.vendor_id === s.vendor_id)?.name || s.vendor_id,
+                    material_desc: DEMO_MATERIALS.find(m => m.material_id === s.material_id)?.desc || s.material_id,
+                    total_value: s.total_value,
+                    safety_stock_days: DEMO_MATERIALS.find(m => m.material_id === s.material_id)?.safety_stock_days || 14
+                }));
+            }
+
+            populateSimulationOrderDropdown();
+        }
+
+        function populateSimulationOrderDropdown() {
+            const selectEl = document.getElementById('simOrderSelect');
+            if (!selectEl) return;
+
+            selectEl.innerHTML = '<option value="GLOBAL">🌐 Global Supply Chain Network (Aggregate Policy)</option>';
+            allDelayedOrders.forEach(ord => {
+                const opt = document.createElement('option');
+                opt.value = ord.po_number || ord.shipment_id;
+                const spendStr = ord.total_value >= 1000 ? `$${(ord.total_value/1000).toFixed(0)}K` : `$${ord.total_value}`;
+                opt.textContent = `📦 ${ord.po_number} — ${ord.vendor_name} | ${ord.material_desc} | ${ord.delay_days}d delay | ${spendStr}`;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function onSimulationOrderSelected(orderVal) {
+            const stripEl = document.getElementById('simOrderDetailsStrip');
+            const badgeEl = document.getElementById('simOrderBadge');
+            const headerTitle = document.getElementById('simResultsHeaderTitle');
+            
+            if (!orderVal || orderVal === 'GLOBAL') {
+                selectedSimulationOrder = 'GLOBAL';
+                if (stripEl) stripEl.style.display = 'none';
+                if (badgeEl) {
+                    badgeEl.textContent = 'Scope: Global Supply Network';
+                    badgeEl.style.background = 'var(--fiori-blue-light)';
+                    badgeEl.style.color = 'var(--fiori-blue)';
+                }
+                if (headerTitle) headerTitle.textContent = 'Projected Outcome & Confidence Intervals (Global Supply Network)';
+                
+                // Revert to global scenario baseMetrics
+                const baseScenario = SCENARIOS.find(s => s.id === activeScenario.id);
+                if (baseScenario) activeScenario.baseMetrics = { ...baseScenario.baseMetrics };
+            } else {
+                const order = allDelayedOrders.find(o => o.po_number === orderVal || o.shipment_id === orderVal) || {
+                    po_number: orderVal,
+                    vendor_name: 'Strategic Supplier',
+                    material_desc: 'Critical Assembly Component',
+                    delay_days: 8.0,
+                    total_value: 125000,
+                    safety_stock_days: 14
+                };
+                selectedSimulationOrder = order;
+
+                if (stripEl) stripEl.style.display = 'block';
+                if (badgeEl) {
+                    badgeEl.textContent = `Target Order: ${order.po_number} (${order.vendor_name})`;
+                    badgeEl.style.background = 'rgba(233, 115, 12, 0.15)';
+                    badgeEl.style.color = 'var(--fiori-orange)';
+                }
+                if (headerTitle) headerTitle.textContent = `Projected Outcome for ${order.po_number} (${order.material_desc})`;
+
+                document.getElementById('simPoNumber').textContent = order.po_number;
+                document.getElementById('simPoVendor').textContent = order.vendor_name;
+                document.getElementById('simPoMaterial').textContent = order.material_desc;
+                document.getElementById('simPoDelay').textContent = `${order.delay_days} days`;
+                document.getElementById('simPoValue').textContent = order.total_value >= 1000 ? `$${(order.total_value/1000).toFixed(1)}K` : `$${order.total_value}`;
+                document.getElementById('simPoBuffer').textContent = `${order.safety_stock_days} days`;
+
+                // Update scenario base metrics dynamically for this specific PO
+                const delayVal = parseFloat(order.delay_days) || 7.5;
+                const costVal = parseFloat(order.total_value) || 100000;
+                const bufferVal = parseFloat(order.safety_stock_days) || 14;
+
+                if (activeScenario.id === 'carrier_switch') {
+                    activeScenario.baseMetrics = {
+                        otd_pct: 0.0,
+                        avg_delay_days: delayVal,
+                        total_cost: costVal,
+                        at_risk_lines: 1
+                    };
+                } else if (activeScenario.id === 'dual_source') {
+                    activeScenario.baseMetrics = {
+                        otd_pct: 0.0,
+                        avg_delay_days: delayVal,
+                        total_cost: costVal,
+                        supply_risk_score: 0.78
+                    };
+                } else if (activeScenario.id === 'buffer_stock') {
+                    activeScenario.baseMetrics = {
+                        production_stop_risk: delayVal > bufferVal ? 0.88 : 0.28,
+                        avg_buffer_days: bufferVal,
+                        holding_cost_annual: Math.round(costVal * 0.20),
+                        at_risk_lines: 1
+                    };
+                }
+            }
+
+            runSimulation();
+        }
+
+        function selectScenario(id) {
+            document.querySelectorAll('.fiori-scenario-card').forEach(c => {
+                c.classList.toggle('active', c.dataset.id === id);
+            });
+            
+            const scenario = SCENARIOS.find(s => s.id === id);
+            activeScenario = { ...scenario, baseMetrics: { ...scenario.baseMetrics } };
+            simParams = {};
+            
+            document.getElementById('simTitle').textContent = scenario.name;
+            
+            let slidersHtml = '';
+            scenario.parameters.forEach(p => {
+                simParams[p.id] = p.default;
+                slidersHtml += `
+                <div class="fiori-slider-group">
+                    <div class="fiori-slider-header">
+                        <span>${p.label}</span>
+                        <span class="fiori-slider-value"><span id="val-${p.id}">${p.default}</span> ${p.unit || ''}</span>
+                    </div>
+                    <input type="range" id="param-${p.id}" min="${p.min}" max="${p.max}" step="${p.step || 1}" value="${p.default}" 
+                           oninput="onSliderChange('${id}', '${p.id}', this.value)">
+                </div>`;
+            });
+            
+            document.getElementById('simSliders').innerHTML = slidersHtml;
+
+            // Re-apply order-level metrics if a PO is currently selected
+            const selectEl = document.getElementById('simOrderSelect');
+            if (selectEl && selectEl.value && selectEl.value !== 'GLOBAL') {
+                onSimulationOrderSelected(selectEl.value);
+            } else {
+                runSimulation();
+            }
+        }
+
+        function onSliderChange(scenarioId, paramId, value) {
+            simParams[paramId] = parseFloat(value);
+            document.getElementById(`val-${paramId}`).textContent = value;
+            
+            clearTimeout(simDebounceTimer);
+            document.getElementById('simResultsLoading').style.display = 'flex';
+            
+            simDebounceTimer = setTimeout(runSimulation, 200);
+        }
+
+        async function runSimulation() {
+            let results;
+            const isOrderLevel = selectedSimulationOrder && selectedSimulationOrder !== 'GLOBAL';
+            
+            if (bdcClient.isConnected) {
+                try {
+                    const payload = {
+                        scenario: activeScenario.id,
+                        ...simParams
+                    };
+                    if (isOrderLevel) {
+                        payload.po_number = selectedSimulationOrder.po_number;
+                        payload.base_delay = parseFloat(selectedSimulationOrder.delay_days);
+                        payload.base_cost = parseFloat(selectedSimulationOrder.total_value);
+                    }
+                    results = await bdcClient.callTwinEngine('simulate', payload);
+                } catch(e) {
+                    console.warn("Model Serving API unavailable, using local simulation model", e);
+                    results = calculateLocalSimulation(activeScenario.id, simParams, isOrderLevel ? selectedSimulationOrder : null);
+                }
+            } else {
+                results = calculateLocalSimulation(activeScenario.id, simParams, isOrderLevel ? selectedSimulationOrder : null);
+            }
+            
+            renderSimResults(results, activeScenario.baseMetrics);
+            document.getElementById('simResultsLoading').style.display = 'none';
+        }
+
+        function calculateLocalSimulation(scenarioId, params, selectedOrder) {
+            if (!selectedOrder) {
+                // Global network calculation
+                const scenario = SCENARIOS.find(s => s.id === scenarioId);
+                return scenario.calculate(params);
+            }
+
+            // Order-Level Targeted Calculation
+            const baseDelay = parseFloat(selectedOrder.delay_days) || 7.5;
+            const baseCost = parseFloat(selectedOrder.total_value) || 100000;
+            const bufferDays = parseFloat(selectedOrder.safety_stock_days) || 14;
+
+            if (scenarioId === 'carrier_switch') {
+                const pct = params.pct_rerouted / 100;
+                const costMult = params.cost_multiplier;
+                const projDelay = Math.max(0.5, +(baseDelay * (1 - pct * 0.82)).toFixed(1));
+                const projCost = Math.round(baseCost * (1 + pct * (costMult - 1) * 0.18));
+                const projOtd = projDelay <= 1.0 ? 99.0 : (projDelay <= 3.0 ? 82.0 : (projDelay <= 5.0 ? 45.0 : 15.0));
+                const atRisk = projDelay > bufferDays ? 1 : 0;
+                
+                return {
+                    otd_pct: { mean: projOtd, p5: Math.max(0, projOtd - 5), p95: Math.min(100, projOtd + 3) },
+                    avg_delay_days: { mean: projDelay, p5: Math.max(0.5, +(projDelay - 0.4).toFixed(1)), p95: +(projDelay + 0.6).toFixed(1) },
+                    total_cost: { mean: projCost, p5: Math.round(projCost * 0.98), p95: Math.round(projCost * 1.03) },
+                    at_risk_lines: atRisk
+                };
+            } else if (scenarioId === 'dual_source') {
+                const split = params.split_pct / 100;
+                const secOtd = params.secondary_otd / 100;
+                const projDelay = Math.max(1.0, +(baseDelay * (1 - split * secOtd * 0.85)).toFixed(1));
+                const projCost = Math.round(baseCost * (1 + split * 0.08));
+                const riskScore = Math.max(0.12, +(0.78 - (split * 0.75)).toFixed(2));
+                const projOtd = Math.min(98.0, +(20 + split * secOtd * 78).toFixed(1));
+
+                return {
+                    otd_pct: { mean: projOtd, p5: Math.max(0, projOtd - 4), p95: Math.min(100, projOtd + 2) },
+                    avg_delay_days: { mean: projDelay, p5: Math.max(0.8, +(projDelay - 0.3).toFixed(1)), p95: +(projDelay + 0.5).toFixed(1) },
+                    total_cost: { mean: projCost, p5: Math.round(projCost * 0.99), p95: Math.round(projCost * 1.02) },
+                    supply_risk_score: { mean: riskScore, p5: Math.max(0.1, +(riskScore - 0.04).toFixed(2)), p95: +(riskScore + 0.05).toFixed(2) }
+                };
+            } else if (scenarioId === 'buffer_stock') {
+                const addDays = params.buffer_days;
+                const holdPct = params.holding_cost_pct / 100;
+                const totalBuffer = bufferDays + addDays;
+                const lineStopRisk = baseDelay > totalBuffer ? Math.max(0.1, +(0.88 - ((totalBuffer - bufferDays) * 0.04)).toFixed(2)) : Math.max(0.01, +(0.35 - (addDays * 0.025)).toFixed(2));
+                const annualHold = Math.round(baseCost * 0.20 + (addDays / 365) * holdPct * baseCost);
+                const atRisk = baseDelay > totalBuffer ? 1 : 0;
+
+                return {
+                    production_stop_risk: { mean: lineStopRisk, p5: Math.max(0.01, +(lineStopRisk - 0.03).toFixed(2)), p95: Math.min(1.0, +(lineStopRisk + 0.04).toFixed(2)) },
+                    avg_buffer_days: totalBuffer,
+                    holding_cost_annual: { mean: annualHold, p5: Math.round(annualHold * 0.96), p95: Math.round(annualHold * 1.05) },
+                    at_risk_lines: atRisk
+                };
+            }
+        }
+
+        function renderSimResults(projected, base) {
+            const container = document.getElementById('simResults');
+            let html = '';
+            
+            const formatters = {
+                otd_pct: v => (typeof v === 'number' ? v.toFixed(1) : parseFloat(v).toFixed(1)) + '%',
+                avg_delay_days: v => (typeof v === 'number' ? v.toFixed(1) : parseFloat(v).toFixed(1)) + ' d',
+                total_cost: v => '$' + ((typeof v === 'number' ? v : parseFloat(v))/1000).toFixed(1) + 'k',
+                at_risk_lines: v => v,
+                supply_risk_score: v => (typeof v === 'number' ? v.toFixed(2) : parseFloat(v).toFixed(2)),
+                production_stop_risk: v => ((typeof v === 'number' ? v : parseFloat(v))*100).toFixed(1) + '%',
+                avg_buffer_days: v => (typeof v === 'number' ? v.toFixed(1) : parseFloat(v).toFixed(1)) + ' d',
+                holding_cost_annual: v => '$' + ((typeof v === 'number' ? v : parseFloat(v))/1000).toFixed(1) + 'k'
+            };
+            
+            const labels = {
+                otd_pct: 'On-Time Delivery (OTD)',
+                avg_delay_days: 'Average Delay Days',
+                total_cost: 'Total Logistics Cost / Spend',
+                at_risk_lines: 'At-Risk Order Lines',
+                supply_risk_score: 'Supply Disruption Risk Score',
+                production_stop_risk: 'Production Line Stop Risk',
+                avg_buffer_days: 'Avg Safety Buffer Stock',
+                holding_cost_annual: 'Annual Holding Cost'
+            };
+
+            for (const key in base) {
+                const bVal = base[key];
+                const isCi = projected[key] && typeof projected[key] === 'object' && projected[key].mean !== undefined;
+                const pVal = isCi ? projected[key].mean : projected[key];
+                
+                const fmt = formatters[key] || (v => v);
+                const label = labels[key] || key;
+                
+                const deltaNum = pVal - bVal;
+                let deltaStr = '';
+                let deltaClass = '';
+                
+                const isLowerBetter = ['avg_delay_days', 'total_cost', 'at_risk_lines', 'supply_risk_score', 'production_stop_risk', 'holding_cost_annual'].includes(key);
+                
+                if (Math.abs(deltaNum) > 0.001) {
+                    const isImprovement = isLowerBetter ? (deltaNum < 0) : (deltaNum > 0);
+                    deltaClass = isImprovement ? 'delta-positive' : 'delta-negative';
+                    const sign = deltaNum > 0 ? '+' : '';
+                    const dPct = bVal !== 0 ? (deltaNum / bVal) * 100 : (deltaNum > 0 ? 100 : 0);
+                    deltaStr = `${sign}${dPct.toFixed(1)}%`;
+                } else {
+                    deltaStr = '0.0%';
+                    deltaClass = 'text-secondary';
+                }
+
+                html += `
+                <div class="fiori-result-box">
+                    <div class="result-label">${label}</div>
+                    <div class="result-values">
+                        <span class="result-base">${fmt(bVal)}</span>
+                        <span class="result-projected">${fmt(pVal)}</span>
+                        <span class="result-delta ${deltaClass}">${deltaStr}</span>
+                    </div>
+                `;
+
+                if (isCi) {
+                    const p5 = projected[key].p5;
+                    const p95 = projected[key].p95;
+                    const rangeSpan = Math.max(1, pVal * 0.4); 
+                    const minScale = pVal - (rangeSpan/2);
+                    
+                    const leftPct = Math.max(0, ((p5 - minScale) / rangeSpan) * 100);
+                    const widthPct = Math.min(100 - leftPct, ((p95 - p5) / rangeSpan) * 100);
+                    const meanPct = Math.max(0, Math.min(100, ((pVal - minScale) / rangeSpan) * 100));
+                    
+                    html += `
+                    <div class="ci-band-container">
+                        <div class="ci-band">
+                            <div class="ci-range" style="left: ${leftPct}%; width: ${widthPct}%"></div>
+                            <div class="ci-marker" style="left: ${meanPct}%"></div>
+                        </div>
+                        <span class="ci-label">P5: ${fmt(p5)} | Mean: ${fmt(pVal)} | P95: ${fmt(p95)}</span>
+                    </div>`;
+                }
+                
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // Audit Trail (Live Closed-Loop Delta Lake)
+        // ============================================================
+        async function loadAuditTrail() {
+            let logs = [];
+            const countEl = document.getElementById('auditRecordCount');
+            if (countEl) countEl.textContent = '⏳ Querying Delta Lake...';
+
+            if (bdcClient.isConnected) {
+                try {
+                    logs = await bdcClient.executeSQL(`SELECT * FROM s2p_twin.delayed_shipment.action_log ORDER BY executed_at DESC LIMIT 50`);
+                } catch(e) { console.warn('Audit fetch error, using local log', e); }
+            }
+            
+            const isLive = logs && logs.length > 0;
+            if (!isLive) {
+                logs = DEMO_ACTION_LOG;
+            }
+            
+            if (countEl) {
+                countEl.textContent = isLive 
+                    ? `🟢 ${logs.length} logged actions (Live Delta Lake)` 
+                    : `🟡 ${logs.length} logged actions (Demo Log)`;
+                countEl.style.background = isLive ? 'rgba(16, 126, 62, 0.15)' : 'rgba(233, 115, 12, 0.15)';
+                countEl.style.color = isLive ? '#107e3e' : '#e9730c';
+            }
+            
+            const tbody = document.getElementById('auditTableBody');
+            let html = '';
+            logs.forEach(log => {
+                const ts = log.executed_at || log.timestamp ? new Date(log.executed_at || log.timestamp).toLocaleString() : new Date().toLocaleString();
+                const actId = log.action_id || log.id || 'ACT';
+                const actType = log.action_type || log.type || 'INTERVENTION';
+                const actLabel = log.action_label || log.desc || log.description || 'Intervention executed';
+                const user = log.executed_by || log.user || 'System';
+                const status = log.status || 'EXECUTED';
+                
+                html += `
+                <tr>
+                    <td>${ts}</td>
+                    <td><strong>${actId}</strong></td>
+                    <td><span class="fiori-badge badge-${log.priority || 'MEDIUM'}">${actType}</span></td>
+                    <td>${actLabel}</td>
+                    <td>${user}</td>
+                    <td><span style="color:var(--fiori-green);font-weight:600;">✓ ${status}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // App Initialization
+        function initApp() {
+            initTheme();
+            setupTabs();
+            updateModeUI();
+            loadDashboard();
+            loadDataExplorer('fct_shipment');
+            loadActions();
+            setupSimulation();
+            loadAuditTrail();
+            
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'Escape') closeSettings();
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

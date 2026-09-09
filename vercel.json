@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/health", "destination": "/api/index.py" },
+    { "source": "/proxy/(.*)", "destination": "/api/index.py" }
+  ]
+}
