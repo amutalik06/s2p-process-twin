@@ -190,5 +190,50 @@ def proxy_serving():
         return jsonify({"error": str(e)}), 500
 
 
+# ──────────────────────────────────────────────────────────────
+# AI Agent Copilot Proxy (s2p-procurement-copilot)
+# ──────────────────────────────────────────────────────────────
+
+@app.route("/proxy/agent", methods=["POST"])
+def proxy_agent():
+    try:
+        body = request.get_json(force=True)
+        workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
+        token = body.get("token") or ENV_TOKEN
+        endpoint_name = body.get("endpointName", "s2p-procurement-copilot")
+        message = body.get("message")
+        chat_history = body.get("chatHistory", [])
+
+        if not message:
+            return jsonify({"error": "Missing 'message' parameter"}), 400
+
+        databricks_url = f"{workspace_url}/serving-endpoints/{endpoint_name}/invocations"
+
+        payload = {"input": message}
+        if chat_history:
+            payload["chat_history"] = chat_history
+
+        resp = requests.post(
+            databricks_url,
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            },
+            timeout=120
+        )
+
+        return jsonify(resp.json()), resp.status_code
+
+    except KeyError as e:
+        return jsonify({"error": f"Missing required field: {e}"}), 400
+    except requests.exceptions.ConnectionError as e:
+        return jsonify({"error": f"Cannot reach Agent endpoint: {str(e)}"}), 502
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Agent request timed out (120s). The agent may be warming up — try again."}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(port=3001, debug=True)
