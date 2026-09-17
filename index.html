@@ -1738,10 +1738,18 @@
                 <div class="copilot-avatar">✨</div>
                 <div>
                     <h3 class="copilot-title">S2P Process Twin Copilot</h3>
-                    <span class="copilot-status" id="copilotStatusPill">🟢 BDC Databricks Ready</span>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                        <span class="copilot-status" id="copilotStatusPill">🟢 Checking Endpoint...</span>
+                    </div>
+                    <div id="copilotEndpointDetail" style="font-size:10px;color:var(--fiori-text-muted);margin-top:2px;">
+                        Endpoint: <code>s2p-procurement-copilot</code>
+                    </div>
                 </div>
             </div>
-            <div class="copilot-header-actions">
+            <div class="copilot-header-actions" style="display:flex;align-items:center;gap:6px;">
+                <button id="btnWarmUpCopilot" class="fiori-btn fiori-btn-secondary" onclick="manualWarmUpCopilot()" title="Check status & wake up Databricks endpoint" style="padding:2px 8px;font-size:11px;height:24px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;">
+                    ⚡ Wake Up
+                </button>
                 <button class="copilot-close-btn" id="btnCloseCopilot" onclick="closeCopilot()" title="Close Copilot (Esc)">✕</button>
             </div>
         </div>
@@ -2046,6 +2054,93 @@
                 throw new Error(data.message || 'SQL execution failed');
             }
             
+            async checkEndpointStatus(endpointName = null) {
+                if (!this.isConnected) {
+                    return { connected: false, ready: false, state: 'DISCONNECTED', message: 'Not connected' };
+                }
+                const ep = endpointName || this.config?.agentEndpointName || 's2p-procurement-copilot';
+                const useProxy = await this._checkProxy();
+
+                try {
+                    let data;
+                    if (useProxy) {
+                        const resp = await fetch(`${PROXY_BASE}/proxy/endpoint-status`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                workspaceUrl: this.config?.workspaceUrl,
+                                token: this.config?.token,
+                                endpointName: ep
+                            })
+                        });
+                        data = await resp.json();
+                    } else {
+                        const resp = await fetch(`${this.config.workspaceUrl}/api/2.0/serving-endpoints/${ep}`, {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${this.config.token}` }
+                        });
+                        data = await resp.json();
+                    }
+
+                    const state = data?.ready || data?.state?.ready || data?.status?.ready;
+                    const updating = data?.config_update || data?.state?.config_update || data?.status?.config_update;
+                    const isReady = state === 'READY';
+                    return {
+                        connected: true,
+                        ready: isReady,
+                        state: state || 'UNKNOWN',
+                        updating: updating || 'NOT_UPDATING',
+                        endpoint: ep,
+                        details: data
+                    };
+                } catch (err) {
+                    return {
+                        connected: true,
+                        ready: false,
+                        state: 'ERROR',
+                        error: err.message,
+                        endpoint: ep
+                    };
+                }
+            }
+
+            async warmUpEndpoint(endpointName = null) {
+                if (!this.isConnected) return { status: 'unconnected' };
+                const ep = endpointName || this.config?.agentEndpointName || 's2p-procurement-copilot';
+                const useProxy = await this._checkProxy();
+
+                try {
+                    if (useProxy) {
+                        const resp = await fetch(`${PROXY_BASE}/proxy/endpoint-warmup`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                workspaceUrl: this.config?.workspaceUrl,
+                                token: this.config?.token,
+                                endpointName: ep
+                            })
+                        });
+                        return await resp.json();
+                    } else {
+                        const controller = new AbortController();
+                        const timer = setTimeout(() => controller.abort(), 10000);
+                        try {
+                            const resp = await fetch(`${this.config.workspaceUrl}/serving-endpoints/${ep}/invocations`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ messages: [{ role: 'user', content: 'ping' }] }),
+                                signal: controller.signal
+                            });
+                            clearTimeout(timer);
+                            return { success: true, status: 'warm' };
+                        } catch {
+                            return { success: true, status: 'waking_up' };
+                        }
+                    }
+                } catch (err) {
+                    return { success: false, error: err.message };
+                }
+            }
         
             async askAgent(message, chatHistory = []) {
                 if (!this.isConnected) {
@@ -3363,9 +3458,118 @@
         // 3. Conversational Action Cockpit
         // 4. Vendor Performance Analyst
         // ============================================================
+        // Copilot Drawer & Intelligence Handlers
+        // ============================================================
 
         let copilotChatHistory = [];
         let isCopilotThinking = false;
+        let copilotWarmupState = 'idle';
+
+        async function checkAndWarmUpCopilot(isManual = false) {
+            const statusPill = document.getElementById('copilotStatusPill');
+            const detailEl = document.getElementById('copilotEndpointDetail');
+            const warmBtn = document.getElementById('btnWarmUpCopilot');
+
+            if (!bdcClient.isConnected) {
+                if (statusPill) {
+                    statusPill.innerHTML = '🟡 Demo Agent Mode';
+                    statusPill.style.background = 'rgba(245,166,35,0.15)';
+                    statusPill.style.color = 'var(--fiori-orange)';
+                }
+                if (detailEl) detailEl.textContent = 'Using local synthetic intelligence';
+                if (warmBtn) warmBtn.style.display = 'none';
+                return;
+            }
+
+            if (warmBtn) {
+                warmBtn.style.display = 'inline-flex';
+                warmBtn.disabled = true;
+                warmBtn.innerHTML = '⏳ Checking...';
+            }
+
+            if (statusPill && isManual) {
+                statusPill.innerHTML = '🔵 Checking Endpoint...';
+                statusPill.style.background = 'rgba(0,112,242,0.12)';
+                statusPill.style.color = 'var(--fiori-blue)';
+            }
+
+            try {
+                const epName = bdcClient.config?.agentEndpointName || 's2p-procurement-copilot';
+                const status = await bdcClient.checkEndpointStatus(epName);
+
+                if (status.ready) {
+                    copilotWarmupState = 'ready';
+                    if (statusPill) {
+                        statusPill.innerHTML = '🟢 Copilot Active (Ready)';
+                        statusPill.style.background = 'rgba(16,126,62,0.15)';
+                        statusPill.style.color = 'var(--fiori-green)';
+                    }
+                    if (detailEl) {
+                        detailEl.innerHTML = `Endpoint <code>${escapeHtml(epName)}</code> is <strong>Active &amp; Ready</strong>`;
+                    }
+                    if (warmBtn) {
+                        warmBtn.disabled = false;
+                        warmBtn.innerHTML = '🔄 Re-check';
+                        warmBtn.title = 'Endpoint is warm. Click to re-verify status.';
+                    }
+                    // Fire non-blocking ping to keep container memory warm
+                    bdcClient.warmUpEndpoint(epName);
+                } else if (status.updating === 'IN_PROGRESS' || status.state === 'NOT_READY') {
+                    copilotWarmupState = 'warming';
+                    if (statusPill) {
+                        statusPill.innerHTML = '🟡 Warming Up (Cold Start...)';
+                        statusPill.style.background = 'rgba(245,166,35,0.15)';
+                        statusPill.style.color = 'var(--fiori-orange)';
+                    }
+                    if (detailEl) {
+                        detailEl.innerHTML = `Container scaling up in Databricks (~60-90s)...`;
+                    }
+                    if (warmBtn) {
+                        warmBtn.disabled = false;
+                        warmBtn.innerHTML = '⚡ Wake Up';
+                        warmBtn.title = 'Container is booting. Click to send warm-up ping.';
+                    }
+                    bdcClient.warmUpEndpoint(epName);
+                } else {
+                    if (statusPill) {
+                        statusPill.innerHTML = '🟢 Live: BDC Databricks';
+                        statusPill.style.background = 'rgba(16,126,62,0.15)';
+                        statusPill.style.color = 'var(--fiori-green)';
+                    }
+                    if (detailEl) {
+                        detailEl.innerHTML = `Endpoint: <code>${escapeHtml(epName)}</code>`;
+                    }
+                    if (warmBtn) {
+                        warmBtn.disabled = false;
+                        warmBtn.innerHTML = '⚡ Wake Up';
+                    }
+                    bdcClient.warmUpEndpoint(epName);
+                }
+            } catch (err) {
+                console.warn('Endpoint check failed:', err);
+                if (statusPill) {
+                    statusPill.innerHTML = '🟡 Live (Endpoint Pending)';
+                    statusPill.style.background = 'rgba(245,166,35,0.15)';
+                    statusPill.style.color = 'var(--fiori-orange)';
+                }
+                if (warmBtn) {
+                    warmBtn.disabled = false;
+                    warmBtn.innerHTML = '⚡ Wake Up';
+                }
+            }
+        }
+
+        function manualWarmUpCopilot() {
+            checkAndWarmUpCopilot(true);
+        }
+
+        function retryCopilotMessage(msg) {
+            const inputEl = document.getElementById('copilotInput');
+            if (inputEl) {
+                inputEl.value = msg;
+                sendCopilotMessage();
+            }
+        }
 
         function toggleCopilot() {
             const drawer = document.getElementById('copilotDrawer');
@@ -3383,12 +3587,7 @@
             if (drawer) {
                 drawer.classList.add('open');
                 if (backdrop) backdrop.classList.add('open');
-                const statusPill = document.getElementById('copilotStatusPill');
-                if (statusPill) {
-                    statusPill.textContent = bdcClient.isConnected 
-                        ? '🟢 Live: BDC Databricks' 
-                        : '🟡 Demo Agent Mode';
-                }
+                checkAndWarmUpCopilot(false);
                 setTimeout(() => document.getElementById('copilotInput')?.focus(), 300);
             }
         }
@@ -3437,20 +3636,58 @@
                 if (bdcClient.isConnected) {
                     try {
                         responseText = await bdcClient.askAgent(message, copilotChatHistory);
+                        // On successful response, ensure badge is green
+                        const statusPill = document.getElementById('copilotStatusPill');
+                        if (statusPill) {
+                            statusPill.innerHTML = '🟢 Copilot Active (Ready)';
+                            statusPill.style.background = 'rgba(16,126,62,0.15)';
+                            statusPill.style.color = 'var(--fiori-green)';
+                        }
                     } catch (agentErr) {
                         console.warn('Agent API call failed, falling back to local reasoning:', agentErr);
                         const localReasoning = generateLocalAgentResponse(message);
                         const isTimeout = agentErr.message && agentErr.message.toLowerCase().includes('timed out');
-                        const noticeMsg = isTimeout 
-                            ? `The Databricks Agent endpoint (<code>${escapeHtml(bdcClient.config?.agentEndpointName || 's2p-procurement-copilot')}</code>) is currently scaling up from zero or applying updates in Databricks (timed out). Showing S2P Process Twin intelligence below:`
-                            : `Live Databricks agent call returned: <em>${escapeHtml(agentErr.message)}</em>. Showing S2P Process Twin intelligence below:`;
-                        responseText = `
-                            <div style="background:rgba(245,166,35,0.12);border-left:3px solid var(--fiori-orange);padding:7px 10px;border-radius:5px;margin-bottom:10px;font-size:11.5px;">
-                                ⚠️ <strong>Databricks Agent Notice</strong><br>
-                                <span>${noticeMsg}</span>
-                            </div>
-                            ${localReasoning}
-                        `;
+                        const epName = bdcClient.config?.agentEndpointName || 's2p-procurement-copilot';
+
+                        // Trigger warm-up ping to accelerate container boot
+                        bdcClient.warmUpEndpoint(epName);
+
+                        // Update status pill to warming
+                        const statusPill = document.getElementById('copilotStatusPill');
+                        if (statusPill) {
+                            statusPill.innerHTML = '🟡 Warming Up (Cold Start...)';
+                            statusPill.style.background = 'rgba(245,166,35,0.15)';
+                            statusPill.style.color = 'var(--fiori-orange)';
+                        }
+
+                        if (isTimeout) {
+                            responseText = `
+                                <div style="background:rgba(245,166,35,0.12);border-left:3px solid var(--fiori-orange);padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                                        <strong style="color:var(--fiori-orange);font-size:12.5px;">⚠️ Databricks Container Warming Up</strong>
+                                        <span style="font-size:10.5px;background:rgba(245,166,35,0.2);padding:2px 7px;border-radius:4px;font-weight:600;color:var(--fiori-orange);">Cold Start in Progress</span>
+                                    </div>
+                                    <p style="margin:0 0 8px 0;font-size:11.5px;color:var(--fiori-text-primary);line-height:1.4;">
+                                        The Databricks Serving endpoint <code>${escapeHtml(epName)}</code> was idle and has been signaled to wake up (~30-60s). Once awake, click below to run the live Meta Llama 3.3 agent:
+                                    </p>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <button class="copilot-action-btn" onclick="retryCopilotMessage('${escapeHtml(message.replace(/'/g, "\\'"))}')" style="margin:0;font-size:11px;padding:5px 12px;">
+                                            🔄 Retry Live Query Now
+                                        </button>
+                                        <span style="font-size:11px;color:var(--fiori-text-muted);">or review preliminary S2P Twin insights below:</span>
+                                    </div>
+                                </div>
+                                ${localReasoning}
+                            `;
+                        } else {
+                            responseText = `
+                                <div style="background:rgba(245,166,35,0.12);border-left:3px solid var(--fiori-orange);padding:8px 10px;border-radius:5px;margin-bottom:10px;font-size:11.5px;">
+                                    ⚠️ <strong>Databricks Agent Notice</strong><br>
+                                    <span>Live agent call returned: <em>${escapeHtml(agentErr.message)}</em>. Showing S2P Process Twin intelligence below:</span>
+                                </div>
+                                ${localReasoning}
+                            `;
+                        }
                     }
                 } else {
                     // Fast high-fidelity demo reasoning
@@ -3806,6 +4043,13 @@
             loadActions();
             setupSimulation();
             loadAuditTrail();
+            
+            // Automatic background warm-up ping for AI Copilot endpoint
+            setTimeout(() => {
+                if (typeof checkAndWarmUpCopilot === 'function') {
+                    checkAndWarmUpCopilot(false);
+                }
+            }, 800);
             
             document.addEventListener('keydown', (e) => {
                 if(e.key === 'Escape') { closeSettings(); closeCopilot(); }

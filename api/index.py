@@ -242,5 +242,87 @@ def proxy_agent():
         return jsonify({"error": str(e)}), 500
 
 
+# ──────────────────────────────────────────────────────────────
+# Serving Endpoint Status & Warm-Up Proxy
+# ──────────────────────────────────────────────────────────────
+
+@app.route("/proxy/endpoint-status/<endpoint_name>", methods=["GET", "POST"])
+@app.route("/proxy/endpoint-status", methods=["POST", "GET"])
+def proxy_endpoint_status(endpoint_name=None):
+    try:
+        body = request.get_json(force=True) if request.data else {}
+        workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
+        token = body.get("token") or ENV_TOKEN
+        target_endpoint = endpoint_name or body.get("endpointName") or "s2p-procurement-copilot"
+
+        if not workspace_url or not token:
+            return jsonify({"success": False, "message": "Missing credentials"}), 400
+
+        databricks_url = f"{workspace_url}/api/2.0/serving-endpoints/{target_endpoint}"
+        resp = requests.get(
+            databricks_url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            state = data.get("state", {})
+            ready_state = state.get("ready") or data.get("status", {}).get("ready", "UNKNOWN")
+            updating_state = state.get("config_update") or data.get("status", {}).get("config_update", "NOT_UPDATING")
+            return jsonify({
+                "success": True,
+                "endpoint": target_endpoint,
+                "ready": ready_state,
+                "config_update": updating_state,
+                "details": data
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "endpoint": target_endpoint,
+                "status_code": resp.status_code,
+                "message": resp.text
+            }), resp.status_code
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/proxy/endpoint-warmup", methods=["POST"])
+def proxy_endpoint_warmup():
+    try:
+        body = request.get_json(force=True) if request.data else {}
+        workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
+        token = body.get("token") or ENV_TOKEN
+        endpoint_name = body.get("endpointName") or "s2p-procurement-copilot"
+
+        if not workspace_url or not token:
+            return jsonify({"success": False, "message": "Missing credentials"}), 400
+
+        databricks_url = f"{workspace_url}/serving-endpoints/{endpoint_name}/invocations"
+        payload = {"messages": [{"role": "user", "content": "ping"}]}
+
+        try:
+            resp = requests.post(
+                databricks_url,
+                json=payload,
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                timeout=12
+            )
+            return jsonify({
+                "success": True,
+                "status": "warm",
+                "statusCode": resp.status_code
+            })
+        except requests.exceptions.Timeout:
+            # Expected during cold start — signals Databricks to scale up from zero
+            return jsonify({
+                "success": True,
+                "status": "waking_up",
+                "message": "Endpoint is scaling up from zero in the background."
+            })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(port=3001, debug=True)
