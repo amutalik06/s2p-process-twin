@@ -2082,6 +2082,14 @@
                 if (typeof data === "string") {
                     try { return this._extractAgentText(JSON.parse(data)); } catch { return data; }
                 }
+                // Databricks LangChain trajectory format: [{"messages": [...]}]
+                if (Array.isArray(data) && data.length > 0 && data[0] && Array.isArray(data[0].messages)) {
+                    return this._extractAgentText(data[0].messages);
+                }
+                // Object with messages array: {"messages": [...]}
+                if (data.messages && Array.isArray(data.messages)) {
+                    return this._extractAgentText(data.messages);
+                }
                 // OpenAI / ChatModel style: {"choices": [{"message": {"content": "..."}}]}
                 if (data.choices && Array.isArray(data.choices) && data.choices.length > 0 && data.choices[0].message) {
                     return data.choices[0].message.content || "";
