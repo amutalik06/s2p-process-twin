@@ -2072,28 +2072,67 @@
                 }
                 if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
 
-                // Parse the agent response — handle multiple response formats:
-                // ChatModel: {"choices": [{"message": {"content": "..."}}]}
-                // Legacy: {"predictions": [{"output": "..."}]}
-                // Direct: {"output": "..."}
-                let outputText = "";
-                if (data.choices && data.choices.length > 0) {
-                    // ChatModel format (most common for MLflow LangChain agents)
-                    const choice = data.choices[0];
-                    outputText = choice.message?.content || choice.text || JSON.stringify(choice);
-                } else if (data.predictions && data.predictions.length > 0) {
-                    const pred = data.predictions[0];
-                    outputText = (typeof pred === 'object' && pred !== null) ? (pred.output || pred.result || pred.content || JSON.stringify(pred)) : String(pred);
-                } else if (data.output) {
-                    outputText = data.output;
-                } else if (data.content) {
-                    outputText = data.content;
-                } else if (typeof data === 'string') {
-                    outputText = data;
-                } else {
-                    outputText = JSON.stringify(data);
+                // Extract response text across all Databricks Model Serving formats:
+                let outputText = this._extractAgentText(data);
+                return this._formatMarkdown(outputText);
+            }
+
+            _extractAgentText(data) {
+                if (!data) return "";
+                if (typeof data === "string") {
+                    try { return this._extractAgentText(JSON.parse(data)); } catch { return data; }
                 }
-                return outputText;
+                // OpenAI / ChatModel style: {"choices": [{"message": {"content": "..."}}]}
+                if (data.choices && Array.isArray(data.choices) && data.choices.length > 0 && data.choices[0].message) {
+                    return data.choices[0].message.content || "";
+                }
+                // Databricks predictions array:
+                if (data.predictions) {
+                    return this._extractAgentText(data.predictions);
+                }
+                // Array of messages or nested arrays (e.g. [[{type: human}, {type: ai}, {type: tool}, {type: ai, content: ...}]])
+                if (Array.isArray(data)) {
+                    if (data.length > 0 && Array.isArray(data[0])) {
+                        return this._extractAgentText(data[0]);
+                    }
+                    // Search backwards for the last AI/assistant message with content
+                    for (let i = data.length - 1; i >= 0; i--) {
+                        const item = data[i];
+                        if (item && typeof item === "object") {
+                            const role = item.role || item.type;
+                            const content = item.content || item.text;
+                            if ((role === "ai" || role === "assistant" || role === "chat") && content && typeof content === "string" && content.trim().length > 0) {
+                                return content;
+                            }
+                        }
+                    }
+                    if (data.length > 0) {
+                        const last = data[data.length - 1];
+                        if (typeof last === "string") return last;
+                        if (last && (last.content || last.output || last.result)) {
+                            return last.content || last.output || last.result;
+                        }
+                    }
+                }
+                if (data.output) return typeof data.output === "string" ? data.output : JSON.stringify(data.output);
+                if (data.content) return typeof data.content === "string" ? data.content : JSON.stringify(data.content);
+                if (data.result) return typeof data.result === "string" ? data.result : JSON.stringify(data.result);
+                return JSON.stringify(data);
+            }
+
+            _formatMarkdown(text) {
+                if (!text) return "";
+                if (/^\s*<[a-z]/i.test(text.trim())) return text;
+                return text
+                    .replace(/^### (.*$)/gim, '<h4 style="margin:8px 0 4px;font-size:13px;font-weight:700;">$1</h4>')
+                    .replace(/^## (.*$)/gim, '<h3 style="margin:10px 0 6px;font-size:14px;font-weight:700;">$1</h3>')
+                    .replace(/^# (.*$)/gim, '<h2 style="margin:12px 0 6px;font-size:15px;font-weight:700;">$1</h2>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.15);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px;"><code>$1</code></pre>')
+                    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.1);padding:2px 5px;border-radius:3px;font-size:11.5px;">$1</code>')
+                    .replace(/^\s*[-*•]\s+(.*$)/gim, '<li style="margin-left:16px;margin-bottom:3px;">$1</li>')
+                    .replace(/\n/g, '<br>');
             }
 
             async callTwinEngine(action, params) {
