@@ -1434,10 +1434,6 @@
 
         <!-- Utility Actions: Theme Toggle & Settings -->
         <div class="fiori-shell-actions">
-                        <button class="fiori-copilot-btn" id="btnCopilot" onclick="toggleCopilot()" title="S2P Supply Chain AI Copilot (Powered by BDC Databricks)">
-                <span class="copilot-sparkle">✨</span>
-                <span class="copilot-btn-label">Copilot</span>
-            </button>
 <button class="fiori-icon-btn" id="themeToggle" title="Toggle Fiori Theme (Light/Dark)">
                 ☀️
             </button>
@@ -2059,22 +2055,39 @@
                     });
                     data = await resp.json();
                 } else {
+                    // Direct call (ChatModel schema): {"messages": [...]}
+                    const messages = chatHistory.map(m => ({role: m.role, content: m.content}));
+                    messages.push({role: 'user', content: message});
                     const resp = await fetch(`${this.config.workspaceUrl}/serving-endpoints/${endpointName}/invocations`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ input: message, chat_history: chatHistory })
+                        body: JSON.stringify({ messages: messages })
                     });
                     data = await resp.json();
                 }
 
-                if (data.error) throw new Error(data.error);
+                // Handle error responses
+                if (data.error_code || data.error_class) {
+                    throw new Error(data.message || data.error_code || 'Agent endpoint error');
+                }
+                if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
 
+                // Parse the agent response — handle multiple response formats:
+                // ChatModel: {"choices": [{"message": {"content": "..."}}]}
+                // Legacy: {"predictions": [{"output": "..."}]}
+                // Direct: {"output": "..."}
                 let outputText = "";
-                if (data.predictions && data.predictions.length > 0) {
+                if (data.choices && data.choices.length > 0) {
+                    // ChatModel format (most common for MLflow LangChain agents)
+                    const choice = data.choices[0];
+                    outputText = choice.message?.content || choice.text || JSON.stringify(choice);
+                } else if (data.predictions && data.predictions.length > 0) {
                     const pred = data.predictions[0];
-                    outputText = (typeof pred === 'object' && pred !== null) ? (pred.output || pred.result || JSON.stringify(pred)) : String(pred);
+                    outputText = (typeof pred === 'object' && pred !== null) ? (pred.output || pred.result || pred.content || JSON.stringify(pred)) : String(pred);
                 } else if (data.output) {
                     outputText = data.output;
+                } else if (data.content) {
+                    outputText = data.content;
                 } else if (typeof data === 'string') {
                     outputText = data;
                 } else {

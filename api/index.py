@@ -209,9 +209,16 @@ def proxy_agent():
 
         databricks_url = f"{workspace_url}/serving-endpoints/{endpoint_name}/invocations"
 
-        payload = {"input": message}
+        # Databricks Model Serving for MLflow LangChain agents uses ChatModel schema:
+        # {"messages": [{"role": "user", "content": "..."}, ...]}
+        messages = []
         if chat_history:
-            payload["chat_history"] = chat_history
+            for msg in chat_history:
+                if isinstance(msg, dict) and "role" in msg and "content" in msg:
+                    messages.append({"role": msg["role"], "content": msg["content"]})
+        messages.append({"role": "user", "content": message})
+
+        payload = {"messages": messages}
 
         resp = requests.post(
             databricks_url,
