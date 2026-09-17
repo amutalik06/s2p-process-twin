@@ -1385,6 +1385,26 @@
             text-align: center;
         }
 
+
+        .copilot-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .copilot-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
     </style>
 </head>
 <body>
@@ -1409,11 +1429,12 @@
             <button class="fiori-tab-btn" data-target="actions">⚡ Action Cockpit</button>
             <button class="fiori-tab-btn" data-target="simulation">🔬 Simulation</button>
             <button class="fiori-tab-btn" data-target="audit">📋 Audit Trail</button>
+            <button class="fiori-tab-btn" data-target="copilot" onclick="openCopilot()">✨ AI Copilot</button>
         </nav>
 
         <!-- Utility Actions: Theme Toggle & Settings -->
         <div class="fiori-shell-actions">
-                        <button class="fiori-copilot-btn" id="btnCopilot" title="S2P Supply Chain AI Copilot (Powered by BDC Databricks)">
+                        <button class="fiori-copilot-btn" id="btnCopilot" onclick="toggleCopilot()" title="S2P Supply Chain AI Copilot (Powered by BDC Databricks)">
                 <span class="copilot-sparkle">✨</span>
                 <span class="copilot-btn-label">Copilot</span>
             </button>
@@ -1710,6 +1731,63 @@
             <span>Version 2.4-Fiori</span> • <span>SAP Horizon Design System</span> • <span id="lastSyncTime">Status: Active</span>
         </div>
     </footer>
+
+    <!-- Copilot Drawer Backdrop -->
+    <div id="copilotBackdrop" class="copilot-backdrop" onclick="closeCopilot()"></div>
+
+    <!-- SAP Fiori Copilot Slide-Over Drawer -->
+    <div id="copilotDrawer" class="fiori-copilot-drawer">
+        <div class="copilot-header">
+            <div class="copilot-title-group">
+                <div class="copilot-avatar">✨</div>
+                <div>
+                    <h3 class="copilot-title">S2P Process Twin Copilot</h3>
+                    <span class="copilot-status" id="copilotStatusPill">🟢 BDC Databricks Ready</span>
+                </div>
+            </div>
+            <div class="copilot-header-actions">
+                <button class="copilot-close-btn" id="btnCloseCopilot" onclick="closeCopilot()" title="Close Copilot (Esc)">✕</button>
+            </div>
+        </div>
+
+        <!-- Quick Action Chips (The 4 Core Use Cases) -->
+        <div class="copilot-chips-container">
+            <div class="copilot-chips-title">Procurement Agent Use Cases</div>
+            <div class="copilot-chips">
+                <button class="copilot-chip" onclick="triggerCopilotChip('optimizer')">
+                    🎛️ Auto-Simulation Optimizer
+                </button>
+                <button class="copilot-chip" onclick="triggerCopilotChip('risk_scan')">
+                    ⚠️ Scan Morning Risks
+                </button>
+                <button class="copilot-chip" onclick="triggerCopilotChip('explain_delay')">
+                    🔍 Explain SHP-90045 Delay
+                </button>
+                <button class="copilot-chip" onclick="triggerCopilotChip('vendor_analysis')">
+                    🏭 Compare Strategic Vendors
+                </button>
+            </div>
+        </div>
+
+        <!-- Message Stream -->
+        <div class="copilot-messages" id="copilotMessages">
+            <div class="copilot-message copilot-assistant">
+                <div class="copilot-bubble">
+                    <p>Hello! I am your <strong>S2P Supply Chain Copilot</strong>, connected directly to SAP BDC Databricks and the <code>s2p-twin-engine</code>.</p>
+                    <p style="margin-top:8px;">I can autonomously run simulations across all scenarios, evaluate delay root causes with SHAP explainability, compare vendors, and log confirmed actions to Delta Lake. What would you like to analyze?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="copilot-input-area">
+            <div class="copilot-input-wrapper">
+                <textarea id="copilotInput" class="copilot-textarea" placeholder="Ask about risks, simulations, or vendors..." rows="1"></textarea>
+                <button id="copilotSendBtn" class="copilot-send-btn" onclick="sendCopilotMessage()" title="Send message">➔</button>
+            </div>
+            <div class="copilot-input-footnote">Press Enter to send • Powered by Mosaic AI Agent Framework</div>
+        </div>
+    </div>
 
     <!-- Databricks Connection Settings Modal -->
     <div class="modal-backdrop" id="settingsModal">
@@ -2094,12 +2172,17 @@
         }
 
         function switchTab(targetTabName) {
+            if (targetTabName === 'copilot') {
+                openCopilot();
+                return;
+            }
             document.querySelectorAll('.fiori-tab-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.target === targetTabName);
             });
             document.querySelectorAll('.tab-content').forEach(c => {
                 c.classList.toggle('active', c.id === `tab-${targetTabName}`);
             });
+            if (targetTabName === 'actions') loadActions();
             if (targetTabName === 'audit') loadAuditTrail();
             if (targetTabName === 'dashboard') reloadCharts();
         }
@@ -3222,8 +3305,10 @@
 
         function openCopilot() {
             const drawer = document.getElementById('copilotDrawer');
+            const backdrop = document.getElementById('copilotBackdrop');
             if (drawer) {
                 drawer.classList.add('open');
+                if (backdrop) backdrop.classList.add('open');
                 const statusPill = document.getElementById('copilotStatusPill');
                 if (statusPill) {
                     statusPill.textContent = bdcClient.isConnected 
@@ -3236,7 +3321,9 @@
 
         function closeCopilot() {
             const drawer = document.getElementById('copilotDrawer');
+            const backdrop = document.getElementById('copilotBackdrop');
             if (drawer) drawer.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
         }
 
         function triggerCopilotChip(type) {
