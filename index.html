@@ -1950,17 +1950,31 @@
             constructor() { 
                 this.config = JSON.parse(localStorage.getItem('bdc_config') || 'null');
                 this.proxyAvailable = null; // Will be auto-detected
+                this.serverConfigured = false;
             }
             
-            get isConnected() { return !!this.config; }
+            get isConnected() { return !!this.config || this.serverConfigured; }
 
-            // Auto-detect if the local CORS proxy is running
+            // Auto-detect if the local CORS proxy is running and whether server credentials exist
             async _checkProxy() {
                 if (this.proxyAvailable !== null) return this.proxyAvailable;
                 try {
-                    const resp = await fetch(`${PROXY_BASE}/health`, { method: 'GET', signal: AbortSignal.timeout(2000) });
+                    const resp = await fetch(`${PROXY_BASE}/health`, { method: 'GET', signal: AbortSignal.timeout(3000) });
                     const data = await resp.json();
                     this.proxyAvailable = data.status === 'ok';
+                    if (data.env_configured) {
+                        this.serverConfigured = true;
+                        if (!this.config) {
+                            this.config = {
+                                workspaceUrl: 'https://343749907984660.0.gcp.databricks.com',
+                                token: '',
+                                warehouseId: 'f0d413f0dd7ad7ac',
+                                endpointName: 's2p-twin-engine',
+                                agentEndpointName: 's2p-procurement-copilot'
+                            };
+                            if (typeof updateConnectionStatus === 'function') updateConnectionStatus();
+                        }
+                    }
                 } catch {
                     this.proxyAvailable = false;
                 }
@@ -3425,7 +3439,18 @@
                         responseText = await bdcClient.askAgent(message, copilotChatHistory);
                     } catch (agentErr) {
                         console.warn('Agent API call failed, falling back to local reasoning:', agentErr);
-                        responseText = generateLocalAgentResponse(message);
+                        const localReasoning = generateLocalAgentResponse(message);
+                        const isTimeout = agentErr.message && agentErr.message.toLowerCase().includes('timed out');
+                        const noticeMsg = isTimeout 
+                            ? `The Databricks Agent endpoint (<code>${escapeHtml(bdcClient.config?.agentEndpointName || 's2p-procurement-copilot')}</code>) is currently scaling up from zero or applying updates in Databricks (timed out). Showing S2P Process Twin intelligence below:`
+                            : `Live Databricks agent call returned: <em>${escapeHtml(agentErr.message)}</em>. Showing S2P Process Twin intelligence below:`;
+                        responseText = `
+                            <div style="background:rgba(245,166,35,0.12);border-left:3px solid var(--fiori-orange);padding:7px 10px;border-radius:5px;margin-bottom:10px;font-size:11.5px;">
+                                ⚠️ <strong>Databricks Agent Notice</strong><br>
+                                <span>${noticeMsg}</span>
+                            </div>
+                            ${localReasoning}
+                        `;
                     }
                 } else {
                     // Fast high-fidelity demo reasoning
@@ -3606,12 +3631,83 @@
                 `;
             }
 
+            // USE CASE 5: Purchase Order Deep Analysis (PO-4500103, Bharat Forgings / Copper Wire, and dynamic PO lookups)
+            if (lower.includes('4500103') || lower.includes('copper wire') || lower.includes('bharat')) {
+                return `
+                    <p><strong>📦 Purchase Order Analysis: PO-4500103</strong></p>
+                    <div class="copilot-action-card">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:8px;">
+                            <div><strong>Vendor:</strong> Bharat Forgings Pvt (V-1003)</div>
+                            <div><strong>Total Value:</strong> $816,000 USD</div>
+                            <div><strong>Material:</strong> Copper Wire 2.5mm (M-2003)</div>
+                            <div><strong>Criticality:</strong> <span class="badge badge-medium">MEDIUM</span></div>
+                            <div><strong>Shipment ID:</strong> SHP-90103 (FedEx Logistics)</div>
+                            <div><strong>Tracking Status:</strong> <span style="color:var(--fiori-orange);font-weight:600;">IN_TRANSIT (5-day delay)</span></div>
+                        </div>
+                        <div style="border-top:1px solid var(--fiori-card-border);padding-top:6px;">
+                            <p style="margin:2px 0;"><strong>ML Delay Prediction:</strong> <span style="color:var(--fiori-red);font-weight:700;">HIGH Priority</span> (Predicted delay: <strong>5.3 days</strong>)</p>
+                            <p style="font-size:11.5px;color:var(--fiori-text-muted);margin:3px 0 6px;">
+                                <strong>Top SHAP Risk Drivers:</strong> Days since order (+0.32), Carrier route reliability (+0.24), Vendor historical on-time delivery (88.5%).
+                            </p>
+                            <strong>Prescriptive Mitigation Actions:</strong>
+                            <ul style="font-size:11.5px;margin:4px 0 8px 16px;">
+                                <li><strong>Split Source 40%:</strong> Reallocate partial volume to alternative qualified supplier (Default Action)</li>
+                                <li><strong>Engage Fast-Track Customs Broker:</strong> Expedite port clearance at destination hub</li>
+                                <li><strong>Reschedule Assembly Buffer:</strong> Adjust downstream manufacturing schedule (+3 days)</li>
+                            </ul>
+                            <div style="display:flex;gap:6px;margin-top:6px;">
+                                <button class="copilot-action-btn" onclick="applyDualSourceSim(40, 92)">🔀 Run 40% Split Simulation</button>
+                                <button class="copilot-action-btn secondary" onclick="jumpToTab('actions')">⚡ View in Action Cockpit</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Generic PO / Shipment Pattern Match
+            const poMatch = prompt.match(/PO[- ]?(\d+)/i) || prompt.match(/\b(4500\d{3})\b/);
+            if (poMatch || lower.includes('analyze po') || lower.includes('po details') || lower.includes('purchase order')) {
+                const poId = poMatch ? (poMatch[1].startsWith('4500') ? `PO-${poMatch[1]}` : `PO-${poMatch[1]}`) : 'PO-4500045';
+                const shipment = DEMO_SHIPMENTS.find(s => s.po_number === poId) || DEMO_SHIPMENTS[0];
+                const vendor = DEMO_VENDORS.find(v => v.vendor_id === shipment.vendor_id) || DEMO_VENDORS[0];
+                const material = DEMO_MATERIALS.find(m => m.material_id === shipment.material_id) || DEMO_MATERIALS[0];
+                const rec = DEMO_RECOMMENDATIONS.find(r => r.shipment && r.shipment.shipment_id === shipment.shipment_id) || DEMO_RECOMMENDATIONS[0];
+                
+                return `
+                    <p><strong>📦 Purchase Order Analysis: ${escapeHtml(shipment.po_number)}</strong></p>
+                    <div class="copilot-action-card">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:8px;">
+                            <div><strong>Vendor:</strong> ${escapeHtml(vendor.name)} (${escapeHtml(vendor.vendor_id)})</div>
+                            <div><strong>Total Value:</strong> $${shipment.total_value.toLocaleString()} ${shipment.currency}</div>
+                            <div><strong>Material:</strong> ${escapeHtml(material.desc)} (${escapeHtml(material.material_id)})</div>
+                            <div><strong>Criticality:</strong> <span class="badge badge-${material.criticality.toLowerCase()}">${material.criticality}</span></div>
+                            <div><strong>Shipment:</strong> ${escapeHtml(shipment.shipment_id)} (${escapeHtml(shipment.carrier)})</div>
+                            <div><strong>Status:</strong> <span style="color:${shipment.delay_days > 0 ? 'var(--fiori-red)' : 'var(--fiori-green)'};font-weight:600;">${shipment.status} (${shipment.delay_days} days delay)</span></div>
+                        </div>
+                        <div style="border-top:1px solid var(--fiori-card-border);padding-top:6px;">
+                            <p style="margin:2px 0;"><strong>Delay Reason:</strong> ${escapeHtml(shipment.delay_reason || 'Normal transit schedule')}</p>
+                            <p style="font-size:11.5px;color:var(--fiori-text-muted);margin:3px 0 6px;">
+                                <strong>Vendor OTD:</strong> ${vendor.on_time_delivery_pct}% • <strong>Risk Score:</strong> ${vendor.risk_score} (${vendor.tier} Tier)
+                            </p>
+                            <strong>Recommended Mitigations:</strong>
+                            <ul style="font-size:11.5px;margin:4px 0 8px 16px;">
+                                ${rec.actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}
+                            </ul>
+                            <div style="display:flex;gap:6px;margin-top:6px;">
+                                <button class="copilot-action-btn" onclick="jumpToTab('actions')">⚡ Open Action Cockpit</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             // Default fallback
             return `
                 <p>I have queried the <strong>S2P Process Twin</strong> Delta tables.</p>
                 <p>Currently, the twin tracks <strong>150 active Purchase Orders</strong> with an overall On-Time Delivery rate of <strong>84.2%</strong> and <strong>$1.24M</strong> at risk.</p>
-                <p>Try asking one of our 4 core agent workflows:</p>
+                <p>Try asking one of our core agent workflows:</p>
                 <ul style="font-size:12px;margin-left:16px;">
+                    <li><em>"Analyze PO - 4500103"</em></li>
                     <li><em>"Run the auto-simulation optimizer"</em></li>
                     <li><em>"Scan morning shipment risks"</em></li>
                     <li><em>"Explain why SHP-90045 is delayed"</em></li>
