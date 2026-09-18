@@ -2149,41 +2149,74 @@
                 const useProxy = await this._checkProxy();
                 const endpointName = this.config.agentEndpointName || 's2p-procurement-copilot';
 
-                let data;
-                if (useProxy) {
-                    const resp = await fetch(`${PROXY_BASE}/proxy/agent`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            workspaceUrl: this.config.workspaceUrl,
-                            token: this.config.token,
-                            endpointName: endpointName,
-                            message: message,
-                            chatHistory: chatHistory
-                        })
-                    });
-                    data = await resp.json();
-                } else {
-                    // Direct call (ChatModel schema): {"messages": [...]}
-                    const messages = chatHistory.map(m => ({role: m.role, content: m.content}));
-                    messages.push({role: 'user', content: message});
-                    const resp = await fetch(`${this.config.workspaceUrl}/serving-endpoints/${endpointName}/invocations`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ messages: messages })
-                    });
-                    data = await resp.json();
+                // Retry wrapper: Databricks may return transient "does not exist" after endpoint recreation
+                const maxRetries = 2;
+                let lastError = null;
+
+                for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                    let data;
+                    try {
+                        if (useProxy) {
+                            const resp = await fetch(`${PROXY_BASE}/proxy/agent`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    workspaceUrl: this.config.workspaceUrl,
+                                    token: this.config.token,
+                                    endpointName: endpointName,
+                                    message: message,
+                                    chatHistory: chatHistory
+                                })
+                            });
+                            data = await resp.json();
+                        } else {
+                            const messages = chatHistory.map(m => ({role: m.role, content: m.content}));
+                            messages.push({role: 'user', content: message});
+                            const resp = await fetch(`${this.config.workspaceUrl}/serving-endpoints/${endpointName}/invocations`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ messages: messages })
+                            });
+                            data = await resp.json();
+                        }
+
+                        // Check for retryable "does not exist" error
+                        const errMsg = data?.message || data?.error || '';
+                        const errCode = data?.error_code || '';
+                        const isTransient = (
+                            (typeof errMsg === 'string' && errMsg.toLowerCase().includes('does not exist'))
+                            || errCode.toLowerCase().includes('resource_does_not_exist')
+                        );
+
+                        if (isTransient && attempt < maxRetries) {
+                            console.warn(`Agent call attempt ${attempt+1}: transient error "${errMsg}". Retrying in ${3*(attempt+1)}s...`);
+                            lastError = new Error(errMsg || errCode);
+                            await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+                            continue;
+                        }
+
+                        // Handle non-retryable error responses
+                        if (data.error_code || data.error_class) {
+                            throw new Error(data.message || data.error_code || 'Agent endpoint error');
+                        }
+                        if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+
+                        // Extract response text across all Databricks Model Serving formats:
+                        let outputText = this._extractAgentText(data);
+                        return this._formatMarkdown(outputText);
+
+                    } catch (fetchErr) {
+                        lastError = fetchErr;
+                        if (attempt < maxRetries && fetchErr.message && fetchErr.message.toLowerCase().includes('does not exist')) {
+                            console.warn(`Agent call attempt ${attempt+1} threw: ${fetchErr.message}. Retrying...`);
+                            await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+                            continue;
+                        }
+                        throw fetchErr;
+                    }
                 }
 
-                // Handle error responses
-                if (data.error_code || data.error_class) {
-                    throw new Error(data.message || data.error_code || 'Agent endpoint error');
-                }
-                if (data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
-
-                // Extract response text across all Databricks Model Serving formats:
-                let outputText = this._extractAgentText(data);
-                return this._formatMarkdown(outputText);
+                throw lastError || new Error('Agent call failed after retries');
             }
 
             _extractAgentText(data) {
@@ -3647,6 +3680,7 @@
                         console.warn('Agent API call failed, falling back to local reasoning:', agentErr);
                         const localReasoning = generateLocalAgentResponse(message);
                         const isTimeout = agentErr.message && agentErr.message.toLowerCase().includes('timed out');
+                        const isNotExist = agentErr.message && agentErr.message.toLowerCase().includes('does not exist');
                         const epName = bdcClient.config?.agentEndpointName || 's2p-procurement-copilot';
 
                         // Trigger warm-up ping to accelerate container boot
@@ -3671,7 +3705,26 @@
                                         The Databricks Serving endpoint <code>${escapeHtml(epName)}</code> was idle and has been signaled to wake up (~30-60s). Once awake, click below to run the live Meta Llama 3.3 agent:
                                     </p>
                                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                        <button class="copilot-action-btn" onclick="retryCopilotMessage('${escapeHtml(message.replace(/'/g, "\\'"))}')" style="margin:0;font-size:11px;padding:5px 12px;">
+                                        <button class="copilot-action-btn" onclick="retryCopilotMessage('${escapeHtml(message.replace(/'/g, "\\\\'"))}')" style="margin:0;font-size:11px;padding:5px 12px;">
+                                            🔄 Retry Live Query Now
+                                        </button>
+                                        <span style="font-size:11px;color:var(--fiori-text-muted);">or review preliminary S2P Twin insights below:</span>
+                                    </div>
+                                </div>
+                                ${localReasoning}
+                            `;
+                        } else if (isNotExist) {
+                            responseText = `
+                                <div style="background:rgba(245,166,35,0.12);border-left:3px solid var(--fiori-orange);padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                                        <strong style="color:var(--fiori-orange);font-size:12.5px;">⚠️ Endpoint Container Initializing</strong>
+                                        <span style="font-size:10.5px;background:rgba(245,166,35,0.2);padding:2px 7px;border-radius:4px;font-weight:600;color:var(--fiori-orange);">Scaling Up</span>
+                                    </div>
+                                    <p style="margin:0 0 8px 0;font-size:11.5px;color:var(--fiori-text-primary);line-height:1.4;">
+                                        The agent endpoint <code>${escapeHtml(epName)}</code> is registered but the serving container is still initializing (this is normal after endpoint recreation or cold-start from zero). A warm-up ping has been sent — please wait ~30-60s and retry:
+                                    </p>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <button class="copilot-action-btn" onclick="retryCopilotMessage('${escapeHtml(message.replace(/'/g, "\\\\'"))}')" style="margin:0;font-size:11px;padding:5px 12px;">
                                             🔄 Retry Live Query Now
                                         </button>
                                         <span style="font-size:11px;color:var(--fiori-text-muted);">or review preliminary S2P Twin insights below:</span>

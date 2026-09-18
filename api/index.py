@@ -22,6 +22,7 @@ ENV_WORKSPACE = os.environ.get("DATABRICKS_WORKSPACE_URL", "https://343749907984
 ENV_WAREHOUSE = os.environ.get("DATABRICKS_WAREHOUSE_ID", "f0d413f0dd7ad7ac")
 ENV_TOKEN = os.environ.get("DATABRICKS_TOKEN", "")
 ENV_ENDPOINT = os.environ.get("DATABRICKS_ENDPOINT_NAME", "s2p-twin-engine")
+ENV_AGENT_ENDPOINT = os.environ.get("DATABRICKS_AGENT_ENDPOINT_NAME", "s2p-procurement-copilot")
 
 # ──────────────────────────────────────────────────────────────
 # Health Check
@@ -200,7 +201,7 @@ def proxy_agent():
         body = request.get_json(force=True)
         workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
         token = body.get("token") or ENV_TOKEN
-        endpoint_name = body.get("endpointName", "s2p-procurement-copilot")
+        endpoint_name = body.get("endpointName") or ENV_AGENT_ENDPOINT
         message = body.get("message")
         chat_history = body.get("chatHistory", [])
 
@@ -220,17 +221,53 @@ def proxy_agent():
 
         payload = {"messages": messages}
 
-        resp = requests.post(
-            databricks_url,
-            json=payload,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            },
-            timeout=120
-        )
+        logger.info(f"Agent invocation: POST {databricks_url} (endpoint={endpoint_name})")
 
-        return jsonify(resp.json()), resp.status_code
+        # Retry logic: After endpoint recreation, Databricks may return
+        # "endpoint does not exist" transiently while the container registers.
+        import time
+        max_retries = 2
+        last_resp = None
+        for attempt in range(max_retries + 1):
+            resp = requests.post(
+                databricks_url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+                timeout=120
+            )
+            last_resp = resp
+
+            # If success or non-retryable error, break immediately
+            if resp.status_code < 400:
+                break
+
+            resp_data = {}
+            try:
+                resp_data = resp.json()
+            except Exception:
+                pass
+
+            error_msg = str(resp_data.get("message", "") or resp_data.get("error", ""))
+            is_transient = (
+                "does not exist" in error_msg.lower()
+                or "resource_does_not_exist" in str(resp_data.get("error_code", "")).lower()
+            )
+
+            if is_transient and attempt < max_retries:
+                wait_secs = 5 * (attempt + 1)
+                logger.warning(
+                    f"Agent call attempt {attempt+1} got transient error: {error_msg}. "
+                    f"Retrying in {wait_secs}s..."
+                )
+                time.sleep(wait_secs)
+            else:
+                break
+
+        logger.info(f"Agent invocation response: {last_resp.status_code}")
+        return jsonify(last_resp.json()), last_resp.status_code
 
     except KeyError as e:
         return jsonify({"error": f"Missing required field: {e}"}), 400
@@ -253,7 +290,7 @@ def proxy_endpoint_status(endpoint_name=None):
         body = request.get_json(force=True) if request.data else {}
         workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
         token = body.get("token") or ENV_TOKEN
-        target_endpoint = endpoint_name or body.get("endpointName") or "s2p-procurement-copilot"
+        target_endpoint = endpoint_name or body.get("endpointName") or ENV_AGENT_ENDPOINT
 
         if not workspace_url or not token:
             return jsonify({"success": False, "message": "Missing credentials"}), 400
@@ -293,7 +330,7 @@ def proxy_endpoint_warmup():
         body = request.get_json(force=True) if request.data else {}
         workspace_url = (body.get("workspaceUrl") or ENV_WORKSPACE).rstrip("/")
         token = body.get("token") or ENV_TOKEN
-        endpoint_name = body.get("endpointName") or "s2p-procurement-copilot"
+        endpoint_name = body.get("endpointName") or ENV_AGENT_ENDPOINT
 
         if not workspace_url or not token:
             return jsonify({"success": False, "message": "Missing credentials"}), 400
