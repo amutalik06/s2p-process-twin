@@ -2084,12 +2084,19 @@
 
                     const state = data?.ready || data?.state?.ready || data?.status?.ready;
                     const updating = data?.config_update || data?.state?.config_update || data?.status?.config_update;
-                    const isReady = state === 'READY';
+                    const entityState = data?.details?.config?.served_entities?.[0]?.state || {};
+                    const deployMsg = (entityState.deployment_state_message || '').toLowerCase();
+                    const isScaledToZero = deployMsg.includes('scaled to zero');
+                    const isScalingFromZero = deployMsg.includes('scaling from zero');
+                    const isReady = (state === 'READY') && !isScaledToZero && !isScalingFromZero;
                     return {
                         connected: true,
                         ready: isReady,
                         state: state || 'UNKNOWN',
                         updating: updating || 'NOT_UPDATING',
+                        isScaledToZero: isScaledToZero,
+                        isScalingFromZero: isScalingFromZero,
+                        deploymentMsg: entityState.deployment_state_message || '',
                         endpoint: ep,
                         details: data
                     };
@@ -3538,7 +3545,7 @@
                         statusPill.style.color = 'var(--fiori-green)';
                     }
                     if (detailEl) {
-                        detailEl.innerHTML = `Endpoint <code>${escapeHtml(epName)}</code> is <strong>Active &amp; Ready</strong>`;
+                        detailEl.innerHTML = `Endpoint <code>${escapeHtml(epName)}</code> is <strong>Active &amp; Ready</strong> (Meta Llama 3.3 70B)`;
                     }
                     if (warmBtn) {
                         warmBtn.disabled = false;
@@ -3547,22 +3554,37 @@
                     }
                     // Fire non-blocking ping to keep container memory warm
                     bdcClient.warmUpEndpoint(epName);
-                } else if (status.updating === 'IN_PROGRESS' || status.state === 'NOT_READY') {
+                } else if (status.isScalingFromZero || status.updating === 'IN_PROGRESS') {
                     copilotWarmupState = 'warming';
                     if (statusPill) {
-                        statusPill.innerHTML = '🟡 Warming Up (Cold Start...)';
+                        statusPill.innerHTML = '🟡 Scaling Up (~1-2m)...';
                         statusPill.style.background = 'rgba(245,166,35,0.15)';
                         statusPill.style.color = 'var(--fiori-orange)';
                     }
                     if (detailEl) {
-                        detailEl.innerHTML = `Container scaling up in Databricks (~60-90s)...`;
+                        detailEl.innerHTML = `Container scaling up in Databricks. Auto-refreshing status...`;
+                    }
+                    if (warmBtn) {
+                        warmBtn.disabled = true;
+                        warmBtn.innerHTML = '⏳ Booting...';
+                    }
+                    // Poll in 8s to auto-detect when it switches to Ready
+                    setTimeout(() => checkAndWarmUpCopilot(false), 8000);
+                } else if (status.isScaledToZero) {
+                    copilotWarmupState = 'idle';
+                    if (statusPill) {
+                        statusPill.innerHTML = '💤 Scaled to Zero (Idle)';
+                        statusPill.style.background = 'rgba(100,110,125,0.15)';
+                        statusPill.style.color = '#5a6b82';
+                    }
+                    if (detailEl) {
+                        detailEl.innerHTML = `Endpoint <code>${escapeHtml(epName)}</code> is asleep. Click <strong>⚡ Wake Up</strong> or send a message.`;
                     }
                     if (warmBtn) {
                         warmBtn.disabled = false;
                         warmBtn.innerHTML = '⚡ Wake Up';
-                        warmBtn.title = 'Container is booting. Click to send warm-up ping.';
+                        warmBtn.title = 'Click to boot up container before sending query.';
                     }
-                    bdcClient.warmUpEndpoint(epName);
                 } else {
                     if (statusPill) {
                         statusPill.innerHTML = '🟢 Live: BDC Databricks';
